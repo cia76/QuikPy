@@ -1,4 +1,4 @@
-from QuikPy import QuikPy as qp  # QuikPy = Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
 
 
 def PrintCallback(data):
@@ -6,13 +6,13 @@ def PrintCallback(data):
     print(data)  # Печатаем полученные данные
     
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    # qpProvider = qp.QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    qpProvider = qp.QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
     print(f'Подключено к терминалу QUIK по адресу: {qpProvider.Host}:{qpProvider.RequestsPort},{qpProvider.CallbacksPort}')
 
     # QuikPy - Singleton класс. Будет создан 1 экземпляр класса, на него будут все ссылки
-    # qpProvider2 = qp.QuikPy()
-    qpProvider2 = qp.QuikPy(Host='192.168.1.7')  # QuikPy - это Singleton класс. При попытке создания нового экземпляра получим ссылку на уже имеющийся экземпляр
+    # qpProvider2 = QuikPy()
+    qpProvider2 = QuikPy(Host='192.168.1.7')  # QuikPy - это Singleton класс. При попытке создания нового экземпляра получим ссылку на уже имеющийся экземпляр
     print(f'Экземпляры класса совпадают: {qpProvider2 == qpProvider}')
 
     # Проверка соединения

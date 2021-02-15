@@ -1,4 +1,4 @@
-from QuikPy import QuikPy as qp  # QuikPy = Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
 
 
 def GetAllAccounts():
@@ -114,8 +114,8 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
         print(f'- Стоп заявка номер {accountStopOrder["order_num"]} {"Покупка" if isBuy else "Продажа"} {accountStopOrder["class_code"]}.{accountStopOrder["sec_code"]} {accountStopOrder["qty"]} @ {accountStopOrder["price"]}')
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    # qpProvider = qp.QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    qpProvider = qp.QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
     GetAllAccounts()  # Получаем все счета. По ним можно будет сформировать список счетов для торговли
     print()

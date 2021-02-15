@@ -1,5 +1,5 @@
 import time  # Подписка на события по времени
-from QuikPy import QuikPy as qp  # QuikPy = Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
 
 
 def PrintCallback(data):
@@ -11,8 +11,8 @@ def PrintCallback(data):
     print(data['data'])  # Печатаем полученные данные
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    # qpProvider = qp.QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    qpProvider = qp.QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
     firmId = 'MC0063100000'  # Фирма
     classCode = 'TQBR'  # Класс тикера

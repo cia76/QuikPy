@@ -1,4 +1,4 @@
-from QuikPy import QuikPy as qp  # QuikPy = Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
 
 
 def OnTransReply(data):
@@ -34,8 +34,8 @@ def OnDepoLimitDelete(data):
     print(data['data'])  # Печатаем полученные данные
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    # qpProvider = qp.QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    qpProvider = qp.QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
     qpProvider.OnTransReply = OnTransReply  # Ответ на транзакцию пользователя. Если транзакция выполняется из QUIK, то не вызывается
     qpProvider.OnOrder = OnOrder  # Получение новой / изменение существующей заявки
     qpProvider.OnTrade = OnTrade  # Получение новой / изменение существующей сделки
