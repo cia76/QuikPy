@@ -44,7 +44,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     qpProvider.OnDepoLimitDelete = OnDepoLimitDelete  # Удаление позиции по инструментам
 
     TransId = 12345  # Номер транзакции
-    price = 74550  # Цена входа/выхода
+    price = 75000  # Цена входа/выхода
     quantity = 1  # Кол-во в лотах
 
     # Новая лимитная/рыночная заявка
@@ -61,6 +61,16 @@ if __name__ == '__main__':  # Точка входа при запуске это
         'TYPE': 'L'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
     print(f'Новая лимитная/рыночная заявка отправлена на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
+    # Удаление существующей лимитной заявки
+    # orderNum = 1234567890123456789  # 19-и значный номер заявки
+    # transaction = {
+    #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
+    #     'ACTION': 'KILL_ORDER',  # Тип заявки: Удаление существующей заявки
+    #     'CLASSCODE': 'SPBFUT',  # Код площадки
+    #     'SECCODE': 'SiH1',  # Код тикера
+    #     'ORDER_KEY': str(orderNum)}  # Номер заявки
+    # print(f'Удаление заявки отправлено на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
+
     # Новая стоп заявка
     # transaction = {  # Все значения должны передаваться в виде строк
     #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
@@ -76,15 +86,15 @@ if __name__ == '__main__':  # Точка входа при запуске это
     #     'EXPIRY_DATE': 'GTC'}  # Срок действия до отмены
     # print(f'Новая стоп заявка отправлена на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
-    # Удаление существующей заявки
-    # orderNum = 1234567890123456789  # 19-и значный номер заявки
+    # Удаление существующей стоп заявки
+    # orderNum = 1234567  # Номер заявки
     # transaction = {
     #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
-    #     'ACTION': 'KILL_ORDER',  # Тип заявки: Удаление существующей заявки
+    #     'ACTION': 'KILL_STOP_ORDER',  # Тип заявки: Удаление существующей заявки
     #     'CLASSCODE': 'SPBFUT',  # Код площадки
     #     'SECCODE': 'SiH1',  # Код тикера
-    #     'ORDER_KEY': str(orderNum)}  # Номер заявки
-    # print(f'Удаление заявки отправлено на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
+    #     'STOP_ORDER_KEY': str(orderNum)}  # Номер заявки
+    # print(f'Удаление стоп заявки отправлено на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
     input('Enter - отмена')  # Ждем исполнение заявки
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
