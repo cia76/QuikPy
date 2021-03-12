@@ -781,18 +781,18 @@ function qsfunctions.get_candles(msg)
 end
 
 --- Возвращаем все свечи по заданному инструменту и интервалу
---- (ichechet) Если исторические данные по тикеру не приходят, то QUIK блокируется. Чтобы это не происходило, вводим таймаут
+-- (ichechet) Если исторические данные по тикеру не приходят, то QUIK блокируется. Чтобы это не происходило, вводим таймаут
 function qsfunctions.get_candles_from_data_source(msg)
 	local ds, is_error = create_data_source(msg)
 	if not is_error then
-		--- Источник данных изначально приходит пустым. Нужно подождать пока он заполнится данными. Бесконечно ждать тоже нельзя. Вводим таймаут
-		local s = 0 --- Будем ждать 5 секунд, прежде чем вернем таймаут
-		repeat --- Ждем
-			sleep(100) --- 100 миллисекунд
-			s = s + 100 --- Запоминаем кол-во прошедших миллисекунд
-		until (ds:Size() > 0 or s > 5000) --- До тех пор, пока не придут данные или пока не наступит таймаут
+		-- Источник данных изначально приходит пустым. Нужно подождать пока он заполнится данными. Бесконечно ждать тоже нельзя. Вводим таймаут
+		local s = 0 -- Будем ждать 5 секунд, прежде чем вернем таймаут
+		repeat -- Ждем
+			sleep(100) -- 100 миллисекунд
+			s = s + 100 -- Запоминаем кол-во прошедших миллисекунд
+		until (ds:Size() > 0 or s > 5000) -- До тех пор, пока не придут данные или пока не наступит таймаут
 
-		local count = tonumber(split(msg.data, "|")[4]) --- возвращаем последние count свечей. Если равен 0, то возвращаем все доступные свечи.
+		local count = tonumber(split(msg.data, "|")[4]) -- возвращаем последние count свечей. Если равен 0, то возвращаем все доступные свечи.
 		local class, sec, interval = get_candles_param(msg)
 		local candles = {}
 		local start_i = count == 0 and 1 or math.max(1, ds:Size() - count + 1)
@@ -839,7 +839,6 @@ end
 --- Словарь открытых подписок (datasources) на свечи
 data_sources = {}
 last_indexes = {}
-
 --- Подписаться на получения свечей по заданному инструмент и интервалу
 function qsfunctions.subscribe_to_candles(msg)
 	local ds, is_error = create_data_source(msg)
@@ -856,12 +855,13 @@ function qsfunctions.subscribe_to_candles(msg)
 	return msg
 end
 
+--- (ichechet) Функция обработки новой свечки
 function data_source_callback(index, class, sec, interval)
 	local key = get_key(class, sec, interval)
-	if index ~= last_indexes[key] then
-		last_indexes[key] = index
-
-		local candle = fetch_candle(data_sources[key], index - 1)
+	if index ~= last_indexes[key] then -- Номер свечки изменился. Не всегда номер свечки монотонно возрастает https://forum.quik.ru/forum10/topic2530/
+		log(index, 0)
+		local candle = fetch_candle(data_sources[key], last_indexes[key]) -- Получаем только что сформированную прошлую свечку
+		last_indexes[key] = index -- Запоминаем новый номер свечки
 		candle.sec = sec
 		candle.class = class
 		candle.interval = interval
