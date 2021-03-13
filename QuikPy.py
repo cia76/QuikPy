@@ -22,7 +22,7 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
     """Работа с Quik из Python через LUA скрипты QuikSharp https://github.com/finsight/QUIKSharp/tree/master/src/QuikSharp/lua
      На основе Документации по языку LUA в QUIK из https://arqatech.com/ru/support/files/
      """
-    bufferSize = 4096  # Размер буфера приема в байтах
+    bufferSize = 1048576  # Размер буфера приема в байтах (1 МБайт)
     socketRequests = None  # Соединение для запросов
     callbackThread = None  # Поток обработки функций обратного вызова
 
@@ -43,7 +43,6 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
                 fragments.append(fragment.decode('cp1251'))  # Переводим фрагмент в Windows кодировку 1251, добавляем в список
                 if len(fragment) < self.bufferSize:  # Если в принятом фрагменте данных меньше чем размер буфера
                     break  # то это был последний фрагмент, выходим из чтения буфера
-                time.sleep(0.000001)  # Может так получиться, что буфер будет считываться быстрее, чем заполняться. Поэтому, ставим небольшую задержку перед следующим чтением
             data = ''.join(fragments)  # Собираем список фрагментов в строку
             dataList = data.split('\n')  # Одновременно могут прийти несколько функций обратного вызова, разбираем их по одной
             for data in dataList:  # Пробегаемся по всем функциям обратного вызова
@@ -114,10 +113,11 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
             fragment = self.socketRequests.recv(self.bufferSize)  # Читаем фрагмент из буфера
             fragments.append(fragment.decode('cp1251'))  # Переводим фрагмент в Windows кодировку 1251, добавляем в список
             if len(fragment) < self.bufferSize:  # Если в принятом фрагменте данных меньше чем размер буфера
-                break  # то это был последний фрагмент, выходим из чтения буфера
-            time.sleep(0.000001)  # Может так получиться, что буфер будет считываться быстрее, чем заполняться. Поэтому, ставим небольшую задержку перед следующим чтением
-        data = ''.join(fragments)  # Собираем список фрагментов в строку
-        return json.loads(data)  # Возвращаем ответ в формате JSON в Windows кодировке 1251
+                data = ''.join(fragments)  # Собираем список фрагментов в строку
+                try:  # Бывает ситуация, когда данных приходит меньше, но это еще не конец данных
+                    return json.loads(data)  # Попробуем вернуть ответ в формате JSON в Windows кодировке 1251
+                except json.decoder.JSONDecodeError:  # Если это еще не конец данных
+                    pass  # то ждем фрагментов в буфере дальше
 
     # Инициализация и вход
 
