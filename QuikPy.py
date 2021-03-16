@@ -36,19 +36,25 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
         socketCallbacks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Соединение для функций обратного вызова
         socketCallbacks.connect((self.Host, self.CallbacksPort))  # Открываем соединение для функций обратного вызова
         currentThread = threading.currentThread()  # Получаем текущий поток
+        fragments = []  # Будем получать ответ в виде списка фрагментов. Они могут быть разной длины. Ответ может состоять из нескольких фрагментов
         while getattr(currentThread, 'process', True):  # Пока поток нужен
-            fragments = []  # Гораздо быстрее получать ответ в виде списка фрагментов
             while True:  # Пока есть что-то в буфере ответов
                 fragment = socketCallbacks.recv(self.bufferSize)  # Читаем фрагмент из буфера
                 fragments.append(fragment.decode('cp1251'))  # Переводим фрагмент в Windows кодировку 1251, добавляем в список
                 if len(fragment) < self.bufferSize:  # Если в принятом фрагменте данных меньше чем размер буфера
-                    break  # то это был последний фрагмент, выходим из чтения буфера
+                    break  # то, возможно, это был последний фрагмент, выходим из чтения буфера
             data = ''.join(fragments)  # Собираем список фрагментов в строку
             dataList = data.split('\n')  # Одновременно могут прийти несколько функций обратного вызова, разбираем их по одной
+            fragments = []  # Сбрасываем фрагменты. Если последнюю строку не сможем разобрать, то занесем ее сюда
             for data in dataList:  # Пробегаемся по всем функциям обратного вызова
                 if data == '':  # Если функция обратного вызова пустая
                     continue  # то ее не разбираем, переходим на следующую функцию, дальше не продолжаем
-                data = json.loads(data)  # Возвращаем полученный ответ в формате JSON
+                try:  # Пробуем разобрать функцию обратного вызова
+                    data = json.loads(data)  # Возвращаем полученный ответ в формате JSON
+                except json.decoder.JSONDecodeError:  # Если разобрать не смогли (пришла не вся строка)
+                    fragments.append(data)  # то, что не разобрали ставим в список фрагментов
+                    break  # т.к. неполной может быть только последняя строка, то выходим из разбора функций обратного выходва
+
                 # Разбираем функцию обратного вызова QUIK LUA
                 if data['cmd'] == 'OnFirm':  # 1. Новая фирма
                     self.OnFirm(data)
