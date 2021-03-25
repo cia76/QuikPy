@@ -1,7 +1,6 @@
 import socket  # Обращаться к LUA скриптам QuikSharp будем через соединения
 import threading  # Результат работы функций обратного вызова будем получать в отдельном потоке
 import json  # Передавать и принимать данные в QUIK будем через JSON
-import time  # Задержка при чтении буфера
 
 
 class Singleton(type):
@@ -32,7 +31,6 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
 
     def CallbackHandler(self):
         """Поток обработки результатов функций обратного вызова"""
-        # TODO Проверить работу при переходе на следующую сессию (отключение и включение QUIK)
         socketCallbacks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Соединение для функций обратного вызова
         socketCallbacks.connect((self.Host, self.CallbacksPort))  # Открываем соединение для функций обратного вызова
         currentThread = threading.currentThread()  # Получаем текущий поток

@@ -43,56 +43,62 @@ if __name__ == '__main__':  # Точка входа при запуске это
     qpProvider.OnDepoLimit = OnDepoLimit  # Изменение позиции по инструментам
     qpProvider.OnDepoLimitDelete = OnDepoLimitDelete  # Удаление позиции по инструментам
 
+    classCode = 'SPBFUT'  # Код площадки
+    secCode = 'SiM1'  # Код тикера
     TransId = 12345  # Номер транзакции
-    price = 75000  # Цена входа/выхода
+    price = 77000  # Цена входа/выхода
     quantity = 1  # Кол-во в лотах
 
     # Новая лимитная/рыночная заявка
-    transaction = {  # Все значения должны передаваться в виде строк
-        'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
-        'CLIENT_CODE': '',  # Код клиента. Для фьючерсов его нет
-        'ACCOUNT': 'SPBFUT00PST',  # Счет
-        'ACTION': 'NEW_ORDER',  # Тип заявки: Новая лимитная/рыночная заявка
-        'CLASSCODE': 'SPBFUT',  # Код площадки
-        'SECCODE': 'SiH1',  # Код тикера
-        'OPERATION': 'S',  # B = покупка, S = продажа
-        'PRICE': str(price),  # Цена исполнения. Для рыночных фьючерсных заявок наихудшая цена в зависимости от направления. Для остальных рыночных заявок цена = 0
-        'QUANTITY': str(quantity),  # Кол-во в лотах
-        'TYPE': 'L'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
-    print(f'Новая лимитная/рыночная заявка отправлена на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
+    # transaction = {  # Все значения должны передаваться в виде строк
+    #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
+    #     'CLIENT_CODE': '',  # Код клиента. Для фьючерсов его нет
+    #     'ACCOUNT': 'SPBFUT00PST',  # Счет
+    #     'ACTION': 'NEW_ORDER',  # Тип заявки: Новая лимитная/рыночная заявка
+    #     'CLASSCODE': classCode,  # Код площадки
+    #     'SECCODE': secCode,  # Код тикера
+    #     'OPERATION': 'S',  # B = покупка, S = продажа
+    #     'PRICE': str(price),  # Цена исполнения. Для рыночных фьючерсных заявок наихудшая цена в зависимости от направления. Для остальных рыночных заявок цена = 0
+    #     'QUANTITY': str(quantity),  # Кол-во в лотах
+    #     'TYPE': 'L'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
+    # print(f'Новая лимитная/рыночная заявка отправлена на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
     # Удаление существующей лимитной заявки
     # orderNum = 1234567890123456789  # 19-и значный номер заявки
     # transaction = {
     #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
     #     'ACTION': 'KILL_ORDER',  # Тип заявки: Удаление существующей заявки
-    #     'CLASSCODE': 'SPBFUT',  # Код площадки
-    #     'SECCODE': 'SiH1',  # Код тикера
+    #     'CLASSCODE': classCode,  # Код площадки
+    #     'SECCODE': secCode,  # Код тикера
     #     'ORDER_KEY': str(orderNum)}  # Номер заявки
     # print(f'Удаление заявки отправлено на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
     # Новая стоп заявка
-    # transaction = {  # Все значения должны передаваться в виде строк
-    #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
-    #     'CLIENT_CODE': '',  # Код клиента. Для фьючерсов его нет
-    #     'ACCOUNT': 'SPBFUT00PST',  # Счет
-    #     'ACTION': 'NEW_STOP_ORDER',  # Тип заявки: Новая стоп заявка
-    #     'CLASSCODE': 'SPBFUT',  # Код площадки
-    #     'SECCODE': 'SiH1',  # Код тикера
-    #     'OPERATION': 'B',  # B = покупка, S = продажа
-    #     'PRICE': str(price),  # Цена исполнения
-    #     'QUANTITY': str(quantity),  # Кол-во в лотах
-    #     'STOPPRICE': str(price),  # Стоп цена исполнения
-    #     'EXPIRY_DATE': 'GTC'}  # Срок действия до отмены
-    # print(f'Новая стоп заявка отправлена на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
+    StopSteps = 10  # Размер проскальзывания в шагах цены
+    slippage = float(qpProvider.GetSecurityInfo(classCode, secCode)['data']['min_price_step']) * StopSteps  # Размер проскальзывания в деньгах
+    if slippage.is_integer():  # Целое значение проскальзывания мы должны отправлять без десятичных знаков
+        slippage = int(slippage)  # поэтому, приводим такое проскальзывание к целому числу
+    transaction = {  # Все значения должны передаваться в виде строк
+        'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
+        'CLIENT_CODE': '',  # Код клиента. Для фьючерсов его нет
+        'ACCOUNT': 'SPBFUT00PST',  # Счет
+        'ACTION': 'NEW_STOP_ORDER',  # Тип заявки: Новая стоп заявка
+        'CLASSCODE': classCode,  # Код площадки
+        'SECCODE': secCode,  # Код тикера
+        'OPERATION': 'B',  # B = покупка, S = продажа
+        'PRICE': str(price),  # Цена исполнения
+        'QUANTITY': str(quantity),  # Кол-во в лотах
+        'STOPPRICE': str(price + slippage),  # Стоп цена исполнения
+        'EXPIRY_DATE': 'GTC'}  # Срок действия до отмены
+    print(f'Новая стоп заявка отправлена на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
     # Удаление существующей стоп заявки
     # orderNum = 1234567  # Номер заявки
     # transaction = {
     #     'TRANS_ID': str(TransId),  # Номер транзакции задается клиентом
     #     'ACTION': 'KILL_STOP_ORDER',  # Тип заявки: Удаление существующей заявки
-    #     'CLASSCODE': 'SPBFUT',  # Код площадки
-    #     'SECCODE': 'SiH1',  # Код тикера
+    #     'CLASSCODE': classCode,  # Код площадки
+    #     'SECCODE': secCode,  # Код тикера
     #     'STOP_ORDER_KEY': str(orderNum)}  # Номер заявки
     # print(f'Удаление стоп заявки отправлено на рынок: {qpProvider.SendTransaction(transaction)["data"]}')
 
