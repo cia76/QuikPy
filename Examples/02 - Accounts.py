@@ -26,7 +26,7 @@ def GetAllAccounts():
             # Инструменты. Если выводить на экран, то занимают много места. Поэтому, закомментировали
             # classSecurities = qpProvider.GetClassSecurities(classCode)['data'][:-1].split(',')  # Список инструментов класса. Удаляем последнюю запятую, разбиваем значения по запятой
             # print(f'  - Тикеры ({classSecurities})')
-        if firmId == 'SPBFUT':  # Для фьючерсов свои расчеты
+        if 'SPBFUT' in firmId:  # Для фьючерсов свои расчеты
             # Лимиты
             print(f'- Фьючерсный лимит {qpProvider.GetFuturesLimit(firmId, tradeAccountId, 0, "SUR")["data"]["cbplimit"]} SUR')
             # Позиции
@@ -70,7 +70,7 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
     stopOrders = qpProvider.GetAllStopOrders()['data']  # Все стоп заявки
 
     print(f'Код клиента {ClientCode}, Фирма {FirmId}, Счет {TradeAccountId}, T{LimitKind}, {CurrencyCode}')
-    if FirmId == 'SPBFUT':  # Для фьючерсов свои расчеты
+    if 'SPBFUT' in FirmId:  # Для фьючерсов свои расчеты
         print(f'- Фьючерсный лимит {qpProvider.GetFuturesLimit(FirmId, TradeAccountId, 0, "SUR")["data"]["cbplimit"]} SUR')
         futuresHoldings = qpProvider.GetFuturesHoldings()['data']  # Все фьючерсные позиции
         activeFuturesHoldings = [futuresHolding for futuresHolding in futuresHoldings if futuresHolding['totalnet'] != 0]  # Активные фьючерсные позиции
@@ -112,6 +112,7 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
     for accountStopOrder in accountStopOrders:  # Пробегаемся по всем стоп заявкам
         isBuy = accountStopOrder['flags'] & 0b100 != 0b100  # Заявка на покупку
         print(f'- Стоп заявка номер {accountStopOrder["order_num"]} {"Покупка" if isBuy else "Продажа"} {accountStopOrder["class_code"]}.{accountStopOrder["sec_code"]} {accountStopOrder["qty"]} @ {accountStopOrder["price"]}')
+
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
