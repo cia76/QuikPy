@@ -78,16 +78,16 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
             print(f'- Фьючерсная позиция {activeFuturesHolding["sec_code"]} {activeFuturesHolding["totalnet"]} @ {activeFuturesHolding["cbplused"]}')
     else:  # Для остальных фирм
         accountMoneyLimit = [moneyLimit for moneyLimit in moneyLimits  # Денежный лимит
-            if moneyLimit['client_code'] == ClientCode and  # Выбираем по коду клиента
-            moneyLimit['firmid'] == FirmId and  # Фирме
-            moneyLimit['limit_kind'] == LimitKind and # Дню лимита
-            moneyLimit["currcode"] == CurrencyCode][0]  # Валюте
+                             if moneyLimit['client_code'] == ClientCode and  # Выбираем по коду клиента
+                             moneyLimit['firmid'] == FirmId and  # Фирме
+                             moneyLimit['limit_kind'] == LimitKind and  # Дню лимита
+                             moneyLimit["currcode"] == CurrencyCode][0]  # Валюте
         print(f'- Денежный лимит {accountMoneyLimit["currentbal"]}')
         accountDepoLimits = [depoLimit for depoLimit in depoLimits  # Бумажный лимит
-            if depoLimit['client_code'] == ClientCode and  # Выбираем по коду клиента
-            depoLimit['firmid'] == FirmId and  # Фирме
-            depoLimit['limit_kind'] == LimitKind and # Дню лимита
-            depoLimit['currentbal'] != 0]  # Берем только открытые позиции по фирме и дню
+                             if depoLimit['client_code'] == ClientCode and  # Выбираем по коду клиента
+                             depoLimit['firmid'] == FirmId and  # Фирме
+                             depoLimit['limit_kind'] == LimitKind and  # Дню лимита
+                             depoLimit['currentbal'] != 0]  # Берем только открытые позиции по фирме и дню
         for firmKindDepoLimit in accountDepoLimits:  # Пробегаемся по всем позициям
             secCode = firmKindDepoLimit["sec_code"]  # Код тикера
             entryPrice = float(firmKindDepoLimit["wa_position_price"])
@@ -97,18 +97,18 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
                 lastPrice *= 10  # Умножаем на 10
             print(f'- Позиция {classCode}.{secCode} {firmKindDepoLimit["currentbal"]} @ {entryPrice:.2f}/{lastPrice:.2f}')
     accountOrders = [order for order in orders  # Заявки
-        if (order['client_code'] == ClientCode or ClientCode == '') and  # Выбираем по коду клиента
-            order['firmid'] == FirmId and  # Фирме
-            order['account'] == TradeAccountId and  # Счету
-            order['flags'] & 0b1 == 0b1]  # Активные заявки
-    for accountOrder in accountOrders:  # Пробегаемся по всем заявка
+                     if (order['client_code'] == ClientCode or ClientCode == '') and  # Выбираем по коду клиента
+                     order['firmid'] == FirmId and  # Фирме
+                     order['account'] == TradeAccountId and  # Счету
+                     order['flags'] & 0b1 == 0b1]  # Активные заявки
+    for accountOrder in accountOrders:  # Пробегаемся по всем заявкам
         isBuy = accountOrder['flags'] & 0b100 != 0b100  # Заявка на покупку
         print(f'- Заявка номер {accountOrder["order_num"]} {"Покупка" if isBuy else "Продажа"} {accountOrder["class_code"]}.{accountOrder["sec_code"]} {accountOrder["qty"]} @ {accountOrder["price"]}')
     accountStopOrders = [stopOrder for stopOrder in stopOrders  # Стоп заявки
-        if (stopOrder['client_code'] == ClientCode or ClientCode == '') and  # Выбираем по коду клиента
-            stopOrder['firmid'] == FirmId and  # Фирме
-            stopOrder['account'] == TradeAccountId and  # Счету
-            stopOrder['flags'] & 0b1 == 0b1]  # Активные стоп заявки
+                         if (stopOrder['client_code'] == ClientCode or ClientCode == '') and  # Выбираем по коду клиента
+                         stopOrder['firmid'] == FirmId and  # Фирме
+                         stopOrder['account'] == TradeAccountId and  # Счету
+                         stopOrder['flags'] & 0b1 == 0b1]  # Активные стоп заявки
     for accountStopOrder in accountStopOrders:  # Пробегаемся по всем стоп заявкам
         isBuy = accountStopOrder['flags'] & 0b100 != 0b100  # Заявка на покупку
         print(f'- Стоп заявка номер {accountStopOrder["order_num"]} {"Покупка" if isBuy else "Продажа"} {accountStopOrder["class_code"]}.{accountStopOrder["sec_code"]} {accountStopOrder["qty"]} @ {accountStopOrder["price"]}')
@@ -121,6 +121,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     GetAllAccounts()  # Получаем все счета. По ним можно будет сформировать список счетов для торговли
     print()
     GetAccount()  # Российские фьючерсы и опционы (счет по умолчанию)
+    # По списку полученных счетов обязательно проверьте каждый!
+    # GetAccount('<Код клиента>', '<Код фирмы>', '<Счет>', <Номер дня лимита>, '<Валюта>')
 
     # Выход
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
