@@ -28,9 +28,9 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
         newBars = qpProvider.GetCandlesFromDataSource(classCode, secCode, interval, 0)["data"]  # Получаем все свечки
         pdBars = pd.DataFrame.from_dict(pd.json_normalize(newBars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
         pdBars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
-                               'datetime.min': 'minute', 'datetime.sec': 'second'},
+                               'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
                       inplace=True)  # Чтобы получить дату/время переименовываем колонки
-        pdBars.index = pd.to_datetime(pdBars[['year', 'month', 'day', 'minute', 'second']])  # Собираем дату/время из колонок
+        pdBars.index = pd.to_datetime(pdBars[['year', 'month', 'day', 'hour', 'minute', 'second']])  # Собираем дату/время из колонок
         pdBars = pdBars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
         pdBars.index.name = 'datetime'  # Ставим название индекса даты/времени
         pdBars.volume = pd.to_numeric(pdBars.volume, downcast='integer')  # Объемы могут быть только целыми
@@ -40,7 +40,7 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
         if isFileExists:  # Если файл существует
             pdBars = pd.concat([fileBars, pdBars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из QUIK, убираем дубликаты, сортируем заново
 
-        pdBars.to_csv(fileName+'1', sep='\t', date_format='%d.%m.%Y %H:%M')
+        pdBars.to_csv(fileName, sep='\t', date_format='%d.%m.%Y %H:%M')
         print(f'- В файл {fileName} сохранено записей: {len(pdBars)}')
 
 
@@ -49,13 +49,17 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
     classCode = 'TQBR'  # Акции ММВБ
-    secCodes = ('SBER',)
-    # secCodes = ('SBER', 'GMKN', 'GAZP', 'LKOH', 'TATN', 'YNDX', 'TCSG', 'ROSN', 'NVTK', 'MVID',
-    #             'CHMF', 'POLY', 'OZON', 'ALRS', 'MAIL', 'MTSS', 'NLMK', 'MAGN', 'PLZL', 'MGNT',
-    #             'MOEX', 'TRMK', 'RUAL', 'SNGS', 'AFKS', 'SBERP', 'SIBN', 'FIVE', 'SNGSP', 'AFLT',
-    #             'IRAO', 'PHOR', 'TATNP', 'VTBR', 'QIWI', 'CBOM', 'FEES', 'BELU', 'TRNFP', 'FIXP')  # TOP 40
-    timeFrame = 'D'  # Временной интервал: 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
-    compression = 1  # Кол-во минут для минутного графика. Для остальных = 1
-    SaveCandlesToFile(classCode, secCodes, timeFrame)
+    secCodes = ('SBER', 'GMKN', 'GAZP', 'LKOH', 'TATN', 'YNDX', 'TCSG', 'ROSN', 'NVTK', 'MVID',
+                'CHMF', 'POLY', 'OZON', 'ALRS', 'MAIL', 'MTSS', 'NLMK', 'MAGN', 'PLZL', 'MGNT',
+                'MOEX', 'TRMK', 'RUAL', 'SNGS', 'AFKS', 'SBERP', 'SIBN', 'FIVE', 'SNGSP', 'AFLT',
+                'IRAO', 'PHOR', 'TATNP', 'VTBR', 'QIWI', 'CBOM', 'FEES', 'BELU', 'TRNFP', 'FIXP')  # TOP 40 акций ММВБ
+    SaveCandlesToFile(classCode, secCodes)  # По умолчанию получаем дневные бары
+
+    classCode = 'SPBFUT'  # Фьючерсы РТС
+    secCodes = ('SiZ1', 'RIZ1')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    SaveCandlesToFile(classCode, secCodes)  # По умолчанию получаем дневные бары
+    timeFrame = 'M'  # Временной интервал: 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
+    compression = 5  # Кол-во минут для минутного графика. Для остальных = 1
+    SaveCandlesToFile(classCode, secCodes, timeFrame, compression)  # Получаем 5-и минутные бары
 
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
