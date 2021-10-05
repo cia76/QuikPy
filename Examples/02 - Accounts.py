@@ -3,6 +3,8 @@ from QuikPy import QuikPy  # Работа с Quik из Python через LUA с�
 
 def GetAllAccounts():
     """Получение всех торговых счетов"""
+    futuresFirmId = 'SPBFUT'  # Фирма для фьючерсов. Измените, если требуется на фирму, которую для фьючерсов поставил ваш брокер
+
     classCodes = qpProvider.GetClassesList()['data']  # Список классов
     classCodesList = classCodes[:-1].split(',')  # Удаляем последнюю запятую, разбиваем значения по запятой
     tradeAccounts = qpProvider.GetTradeAccounts()['data']  # Все торговые счета
@@ -26,7 +28,7 @@ def GetAllAccounts():
             # Инструменты. Если выводить на экран, то занимают много места. Поэтому, закомментировали
             # classSecurities = qpProvider.GetClassSecurities(classCode)['data'][:-1].split(',')  # Список инструментов класса. Удаляем последнюю запятую, разбиваем значения по запятой
             # print(f'  - Тикеры ({classSecurities})')
-        if 'SPBFUT' in firmId:  # Для фьючерсов свои расчеты
+        if firmId == futuresFirmId:  # Для фьючерсов свои расчеты
             # Лимиты
             print(f'- Фьючерсный лимит {qpProvider.GetFuturesLimit(firmId, tradeAccountId, 0, "SUR")["data"]["cbplimit"]} SUR')
             # Позиции
@@ -61,7 +63,7 @@ def GetAllAccounts():
             isBuy = firmStopOrder['flags'] & 0b100 != 0b100  # Заявка на покупку
             print(f'- Стоп заявка номер {firmStopOrder["order_num"]} {"Покупка" if isBuy else "Продажа"} {firmStopOrder["class_code"]}.{firmStopOrder["sec_code"]} {firmStopOrder["qty"]} @ {firmStopOrder["price"]}')
 
-def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', LimitKind=0, CurrencyCode='SUR'):
+def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', LimitKind=0, CurrencyCode='SUR', IsFutures=True):
     """Получение торгового счета. По умолчанию, выдается счет срочного рынка"""
     classCodes = qpProvider.GetClassesList()['data']  # Список классов
     moneyLimits = qpProvider.GetMoneyLimits()['data']  # Все денежные лимиты (остатки на счетах)
@@ -70,7 +72,7 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
     stopOrders = qpProvider.GetAllStopOrders()['data']  # Все стоп заявки
 
     print(f'Код клиента {ClientCode}, Фирма {FirmId}, Счет {TradeAccountId}, T{LimitKind}, {CurrencyCode}')
-    if 'SPBFUT' in FirmId:  # Для фьючерсов свои расчеты
+    if IsFutures:  # Для фьючерсов свои расчеты
         print(f'- Фьючерсный лимит {qpProvider.GetFuturesLimit(FirmId, TradeAccountId, 0, "SUR")["data"]["cbplimit"]} SUR')
         futuresHoldings = qpProvider.GetFuturesHoldings()['data']  # Все фьючерсные позиции
         activeFuturesHoldings = [futuresHolding for futuresHolding in futuresHoldings if futuresHolding['totalnet'] != 0]  # Активные фьючерсные позиции
@@ -115,14 +117,14 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    # qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
     GetAllAccounts()  # Получаем все счета. По ним можно будет сформировать список счетов для торговли
     print()
     GetAccount()  # Российские фьючерсы и опционы (счет по умолчанию)
     # По списку полученных счетов обязательно проверьте каждый!
-    # GetAccount('<Код клиента>', '<Код фирмы>', '<Счет>', <Номер дня лимита>, '<Валюта>')
+    # GetAccount('<Код клиента>', '<Код фирмы>', '<Счет>', <Номер дня лимита>, '<Валюта>', <Счет фьючерсов=True, иначе=False>)
 
     # Выход
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
