@@ -1,3 +1,4 @@
+from time import time
 import os.path
 import pandas as pd
 from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
@@ -45,8 +46,13 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
+    startTime = time()  # Время начала запуска скрипта
     qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
     # qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+
+    timeFrame = 'M'  # Временной интервал: 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
+    compression1 = 5  # Кол-во минут для минутного графика. Для остальных = 1
+    compression2 = 15
 
     classCode = 'TQBR'  # Акции ММВБ
     secCodes = ('SBER', 'GMKN', 'GAZP', 'LKOH', 'TATN', 'YNDX', 'TCSG', 'ROSN', 'NVTK', 'MVID',
@@ -54,12 +60,14 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 'MOEX', 'TRMK', 'RUAL', 'SNGS', 'AFKS', 'SBERP', 'SIBN', 'FIVE', 'SNGSP', 'AFLT',
                 'IRAO', 'PHOR', 'TATNP', 'VTBR', 'QIWI', 'CBOM', 'FEES', 'BELU', 'TRNFP', 'FIXP')  # TOP 40 акций ММВБ
     SaveCandlesToFile(classCode, secCodes)  # По умолчанию получаем дневные бары
+    SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
+    SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
 
     classCode = 'SPBFUT'  # Фьючерсы РТС
     secCodes = ('SiZ1', 'RIZ1')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     SaveCandlesToFile(classCode, secCodes)  # По умолчанию получаем дневные бары
-    timeFrame = 'M'  # Временной интервал: 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
-    compression = 5  # Кол-во минут для минутного графика. Для остальных = 1
-    SaveCandlesToFile(classCode, secCodes, timeFrame, compression)  # Получаем 5-и минутные бары
+    SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
+    SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
 
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    print(f'Скрипт выполнен за {time() - startTime} с')
