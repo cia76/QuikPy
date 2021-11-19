@@ -1,7 +1,7 @@
 from time import time
 import os.path
 import pandas as pd
-from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
 def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compression=1):
@@ -48,7 +48,7 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     startTime = time()  # Время начала запуска скрипта
     qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    # qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    # qpProvider = QuikPy(Host='<Ваш IP адрес>')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
     timeFrame = 'M'  # Временной интервал: 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
     compression1 = 5  # Кол-во минут для минутного графика. Для остальных = 1
@@ -64,7 +64,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
 
     classCode = 'SPBFUT'  # Фьючерсы РТС
-    secCodes = ('SiZ1', 'RIZ1')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    secCodes = ('SiH2', 'RIH2')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     SaveCandlesToFile(classCode, secCodes)  # По умолчанию получаем дневные бары
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары

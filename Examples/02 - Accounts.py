@@ -1,9 +1,9 @@
-from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
 def GetAllAccounts():
     """Получение всех торговых счетов"""
-    futuresFirmId = 'SPBFUT'  # Фирма для фьючерсов. Измените, если требуется на фирму, которую для фьючерсов поставил ваш брокер
+    futuresFirmId = 'SPBFUT'  # Фирма для фьючерсов. Измените, если требуется, на фирму, которую для фьючерсов поставил ваш брокер
 
     classCodes = qpProvider.GetClassesList()['data']  # Список классов
     classCodesList = classCodes[:-1].split(',')  # Удаляем последнюю запятую, разбиваем значения по запятой
@@ -118,7 +118,7 @@ def GetAccount(ClientCode='', FirmId='SPBFUT', TradeAccountId='SPBFUT00PST', Lim
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    # qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    # qpProvider = QuikPy(Host='<Ваш IP адрес>')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
     GetAllAccounts()  # Получаем все счета. По ним можно будет сформировать список счетов для торговли
     print()

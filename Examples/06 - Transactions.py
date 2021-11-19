@@ -1,4 +1,4 @@
-from QuikPy import QuikPy  # Работа с Quik из Python через LUA скрипты QuikSharp
+from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
 def OnTransReply(data):
@@ -34,8 +34,8 @@ def OnDepoLimitDelete(data):
     print(data['data'])  # Печатаем полученные данные
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    # qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    qpProvider = QuikPy(Host='192.168.1.7')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    # qpProvider = QuikPy(Host='<Ваш IP адрес>')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
     qpProvider.OnTransReply = OnTransReply  # Ответ на транзакцию пользователя. Если транзакция выполняется из QUIK, то не вызывается
     qpProvider.OnOrder = OnOrder  # Получение новой / изменение существующей заявки
     qpProvider.OnTrade = OnTrade  # Получение новой / изменение существующей сделки
@@ -44,7 +44,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     qpProvider.OnDepoLimitDelete = OnDepoLimitDelete  # Удаление позиции по инструментам
 
     classCode = 'SPBFUT'  # Код площадки
-    secCode = 'SiM1'  # Код тикера
+    secCode = 'SiH2'  # Код тикера
     TransId = 12345  # Номер транзакции
     price = 77000  # Цена входа/выхода
     quantity = 1  # Кол-во в лотах
