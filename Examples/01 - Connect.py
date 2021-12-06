@@ -11,9 +11,9 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(f'Подключено к терминалу QUIK по адресу: {qpProvider.Host}:{qpProvider.RequestsPort},{qpProvider.CallbacksPort}')
 
     # QuikPy - Singleton класс. Будет создан 1 экземпляр класса, на него будут все ссылки
-    # qpProvider2 = QuikPy()
     qpProvider2 = QuikPy()  # QuikPy - это Singleton класс. При попытке создания нового экземпляра получим ссылку на уже имеющийся экземпляр
-    print(f'Экземпляры класса совпадают: {qpProvider2 == qpProvider}')
+    # qpProvider2 = QuikPy(Host='<Ваш IP адрес>')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    print(f'Экземпляры класса совпадают: {qpProvider2 is qpProvider}')
 
     # Проверка соединения
     print(f'Терминал QUIK подключен к серверу: {qpProvider.IsConnected()["data"] == 1}')
@@ -23,7 +23,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(f'Дата на сервере: {qpProvider.GetInfoParam("TRADEDATE")["data"]}')
     print(f'Время на сервере: {qpProvider.GetInfoParam("SERVERTIME")["data"]}')
     msg = 'Hello from Python!'
-    print(f'Отправка сообщения в QUIK: {msg}{qpProvider.MessageInfo(msg)["data"]}')  # Проверка работы QUIK. Сообщение должно показаться как информационное в QUIK
+    print(f'Отправка сообщения в QUIK: {msg}{qpProvider.MessageInfo(msg)["data"]}')  # Проверка работы QUIK. Сообщение в QUIK должно показаться как информационное
 
     # Просмотр изменений параметров
     qpProvider.OnParam = PrintCallback  # Текущие параметры изменяются постоянно. Будем их смотреть, пока не нажмем Enter в консоли
