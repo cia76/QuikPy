@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
@@ -21,8 +23,10 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(f'Отклик QUIK на команду Ping: {qpProvider.Ping()["data"]}')  # Проверка работы скрипта QuikSharp. Должен вернуть Pong
 
     # Сервисные функции
-    print(f'Дата на сервере: {qpProvider.GetInfoParam("TRADEDATE")["data"]}')
-    print(f'Время на сервере: {qpProvider.GetInfoParam("SERVERTIME")["data"]}')
+    d = qpProvider.GetInfoParam('TRADEDATE')['data']  # Дата на сервере в виде строки dd.mm.yyyy
+    t = qpProvider.GetInfoParam('SERVERTIME')['data']  # Время на сервере в виде строки hh:mi:ss
+    dt = datetime.strptime(f'{d} {t}', '%d.%m.%Y %H:%M:%S')  # Переводим строки в дату и время
+    print(f'Дата и время на сервере: {dt}')
     msg = 'Hello from Python!'
     print(f'Отправка сообщения в QUIK: {msg}{qpProvider.MessageInfo(msg)["data"]}')  # Проверка работы QUIK. Сообщение в QUIK должно показаться как информационное
 
