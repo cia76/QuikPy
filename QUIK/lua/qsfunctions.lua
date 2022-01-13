@@ -50,8 +50,7 @@ end
 
 --- Test error handling
 function qsfunctions.divide_string_by_zero(msg)
-	--noinspection LuaDivideByZero
-	msg.data = "asd" / 0
+    msg.data = "asd" / 0
     return msg
 end
 
@@ -136,7 +135,7 @@ end
 function qsfunctions.addLabel(msg)
 	local spl = split(msg.data, "|")
 	local price, curdate, curtime, qty, path, id, algmnt, bgnd = spl[1], spl[2], spl[3], spl[4], spl[5], spl[6], spl[7], spl[8]
-	local label = {
+	label = {
 			TEXT = "",
 			IMAGE_PATH = path,
 			ALIGNMENT = algmnt,
@@ -528,7 +527,7 @@ end
 function qsfunctions.get_orders(msg)
 	if msg.data ~= "" then
 		local spl = split(msg.data, "|")
-		local class_code, sec_code = spl[1], spl[2]
+		class_code, sec_code = spl[1], spl[2]
 	end
 
 	local orders = {}
@@ -546,7 +545,7 @@ end
 function qsfunctions.getOrder_by_ID(msg)
 	if msg.data ~= "" then
 		local spl = split(msg.data, "|")
-		local class_code, sec_code, trans_id = spl[1], spl[2], spl[3]
+		class_code, sec_code, trans_id = spl[1], spl[2], spl[3]
 	end
 
 	local order_num = 0
@@ -604,7 +603,7 @@ end
 function qsfunctions.get_trades(msg)
 	if msg.data ~= "" then
 		local spl = split(msg.data, "|")
-		local class_code, sec_code = spl[1], spl[2]
+		class_code, sec_code = spl[1], spl[2]
 	end
 
 	local trades = {}
@@ -653,7 +652,7 @@ end
 function qsfunctions.get_all_trades(msg)
 	if msg.data ~= "" then
 		local spl = split(msg.data, "|")
-		local class_code, sec_code = spl[1], spl[2]
+		class_code, sec_code = spl[1], spl[2]
 	end
 
 	local trades = {}
@@ -727,7 +726,7 @@ end
 function qsfunctions.get_stop_orders(msg)
 	if msg.data ~= "" then
 		local spl = split(msg.data, "|")
-		local class_code, sec_code = spl[1], spl[2]
+		class_code, sec_code = spl[1], spl[2]
 	end
 
 	local count = getNumberOf("stop_orders")
@@ -839,6 +838,7 @@ end
 --- Словарь открытых подписок (datasources) на свечи
 data_sources = {}
 last_indexes = {}
+
 --- Подписаться на получения свечей по заданному инструмент и интервалу
 function qsfunctions.subscribe_to_candles(msg)
 	local ds, is_error = create_data_source(msg)
@@ -855,13 +855,12 @@ function qsfunctions.subscribe_to_candles(msg)
 	return msg
 end
 
---- (ichechet) Функция обработки новой свечки
 function data_source_callback(index, class, sec, interval)
 	local key = get_key(class, sec, interval)
-	if index ~= last_indexes[key] then -- Номер свечки изменился. Не всегда номер свечки монотонно возрастает https://forum.quik.ru/forum10/topic2530/
-		log(index, 0)
-		local candle = fetch_candle(data_sources[key], last_indexes[key]) -- Получаем только что сформированную прошлую свечку
-		last_indexes[key] = index -- Запоминаем новый номер свечки
+	if index ~= last_indexes[key] then
+		last_indexes[key] = index
+
+		local candle = fetch_candle(data_sources[key], index - 1)
 		candle.sec = sec
 		candle.class = class
 		candle.interval = interval
