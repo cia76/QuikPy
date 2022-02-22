@@ -415,7 +415,7 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
 
     def GetNumCandles(self, Tag, TransId=0):  # 2
         """Кол-во свечей по тэгу"""
-        return self.ProcessRequest({'data': Tag, 'id': TransId, 'cmd': 'getNumCandles', 't': ''})
+        return self.ProcessRequest({'data': Tag, 'id': TransId, 'cmd': 'get_num_candles', 't': ''})
 
     # getCandlesByIndex - 3. Информация о свечках (реализовано в get_candles)
     # CreateDataSource - 4. Создание источника данных c функциями: (реализовано в get_candles_from_data_source)
