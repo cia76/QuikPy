@@ -5,7 +5,7 @@ import pandas as pd
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
-def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compression=1, skipLast=False):
+def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compression=1, skipLast=False, fourPriceDoji=False):
     interval = compression  # Для минутных временнЫх интервалов ставим кол-во минут
     if timeFrame == 'D':  # Дневной временной интервал
         interval = 1440  # В минутах
@@ -29,7 +29,7 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
 
         newBars = qpProvider.GetCandlesFromDataSource(classCode, secCode, interval, 0)["data"]  # Получаем все свечки
         if skipLast:  # Для дневных баров мы получаем еще несформировавшийся бар текущей сессии. Он нам не нужен
-            newBars = newBars[:len(newBars) - 1]  # Берем все бары кроме последнего
+            newBars = newBars[:-1]  # Берем все бары кроме последнего
         pdBars = pd.DataFrame.from_dict(pd.json_normalize(newBars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
         pdBars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
                                'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
@@ -38,9 +38,13 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
         pdBars = pdBars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
         pdBars.index.name = 'datetime'  # Ставим название индекса даты/времени
         pdBars.volume = pd.to_numeric(pdBars.volume, downcast='integer')  # Объемы могут быть только целыми
-        print(f'- Первая запись в QUIK: {pdBars.index[0]}')
-        print(f'- Последняя запись в QUIK: {pdBars.index[-1]}')
-        print(f'- Кол-во записей в QUIK: {len(pdBars)}')
+        if not fourPriceDoji:  # Если удаляем дожи 4-х цен
+            l = len(pdBars)  # Кол-во записей до удаления дожи
+            pdBars.drop(pdBars[(pdBars.high == pdBars.low)].index, inplace=True)  # Удаляем их по условия High == Low
+            print('- Удалено дожи 4-х цен:', l - len(pdBars))
+        print('- Первая запись в QUIK:', pdBars.index[0])
+        print('- Последняя запись в QUIK:', pdBars.index[-1])
+        print('- Кол-во записей в QUIK:', len(pdBars))
 
         if isFileExists:  # Если файл существует
             pdBars = pd.concat([fileBars, pdBars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из QUIK, убираем дубликаты, сортируем заново
@@ -58,17 +62,18 @@ if __name__ == '__main__':  # Точка входа при запуске это
     compression2 = 15
 
     classCode = 'TQBR'  # Акции ММВБ
-    secCodes = ('SBER', 'GMKN', 'GAZP', 'LKOH', 'TATN', 'YNDX', 'TCSG', 'ROSN', 'NVTK', 'MVID',
-                'CHMF', 'POLY', 'OZON', 'ALRS', 'MAIL', 'MTSS', 'NLMK', 'MAGN', 'PLZL', 'MGNT',
-                'MOEX', 'TRMK', 'RUAL', 'SNGS', 'AFKS', 'SBERP', 'SIBN', 'FIVE', 'SNGSP', 'AFLT',
-                'IRAO', 'PHOR', 'TATNP', 'VTBR', 'QIWI', 'CBOM', 'FEES', 'BELU', 'TRNFP', 'FIXP')  # TOP 40 акций ММВБ
-    SaveCandlesToFile(classCode, secCodes, skipLast=True)  # Получаем дневные бары без последнего бара
+    # secCodes = ('GAZP',)  # Для тестов
+    secCodes = ('GAZP', 'LKOH', 'SBER', 'NVTK', 'YNDX', 'GMKN', 'ROSN', 'MTLR', 'MGNT', 'CHMF',
+                'PHOR', 'VTBR', 'TCSG', 'PLZL', 'ALRS', 'MAGN', 'CBOM', 'SMLT', 'MVID', 'AFLT',
+                'SNGS', 'SBERP', 'NLMK', 'RUAL', 'MTSS', 'TATN', 'MOEX', 'VKCO', 'MTLRP', 'AFKS',
+                'SNGSP', 'PIKK', 'ISKJ', 'OZON', 'POLY', 'HYDR', 'RASP', 'IRAO', 'SIBN', 'FESH')  # TOP 40 акций ММВБ
+    SaveCandlesToFile(classCode, secCodes, skipLast=True, fourPriceDoji=True)  # Получаем дневные бары без последнего бара с дожи 4-х цен
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
 
     classCode = 'SPBFUT'  # Фьючерсы РТС
-    secCodes = ('SiH2', 'RIH2')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    SaveCandlesToFile(classCode, secCodes, skipLast=True)  # Получаем дневные бары без последнего бара
+    secCodes = ('SiM2', 'RIM2')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    SaveCandlesToFile(classCode, secCodes, skipLast=True, fourPriceDoji=True)  # Получаем дневные бары без последнего бара с дожи 4-х цен
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
     SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
 
