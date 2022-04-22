@@ -39,9 +39,9 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
         pdBars.index.name = 'datetime'  # Ставим название индекса даты/времени
         pdBars.volume = pd.to_numeric(pdBars.volume, downcast='integer')  # Объемы могут быть только целыми
         if not fourPriceDoji:  # Если удаляем дожи 4-х цен
-            l = len(pdBars)  # Кол-во записей до удаления дожи
+            lenWithDoji = len(pdBars)  # Кол-во записей до удаления дожи
             pdBars.drop(pdBars[(pdBars.high == pdBars.low)].index, inplace=True)  # Удаляем их по условия High == Low
-            print('- Удалено дожи 4-х цен:', l - len(pdBars))
+            print('- Удалено дожи 4-х цен:', lenWithDoji - len(pdBars))
         print('- Первая запись в QUIK:', pdBars.index[0])
         print('- Последняя запись в QUIK:', pdBars.index[-1])
         print('- Кол-во записей в QUIK:', len(pdBars))
