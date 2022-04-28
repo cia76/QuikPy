@@ -5,7 +5,18 @@ import pandas as pd
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
-def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compression=1, skipLast=False, fourPriceDoji=False):
+def SaveCandlesToFile(class_code='TQBR', secCodes=('SBER',), timeFrame='D', compression=1,
+                      skipFirstDate=False, skipLastDate=False, fourPriceDoji=False):
+    """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
+
+    :param class_code: Код рынка
+    :param secCodes: Коды тикеров в виде кортежа
+    :param timeFrame: Временной интервал 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
+    :param compression: Кол-во минут для минутного графика. Для остальных = 1
+    :param skipFirstDate: Убрать бары на первую полученную дату
+    :param skipLastDate: Убрать бары на последнюю полученную дату
+    :param fourPriceDoji: Оставить бары с дожи 4-х цен
+    """
     interval = compression  # Для минутных временнЫх интервалов ставим кол-во минут
     if timeFrame == 'D':  # Дневной временной интервал
         interval = 1440  # В минутах
@@ -15,7 +26,7 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
         interval = 23200  # В минутах
 
     for secCode in secCodes:  # Пробегаемся по всем тикерам
-        fileName = f'..\\..\\Data\\{classCode}.{secCode}_{timeFrame}{compression}.txt'
+        fileName = f'..\\..\\Data\\{class_code}.{secCode}_{timeFrame}{compression}.txt'
         isFileExists = os.path.isfile(fileName)  # Существует ли файл
         if not isFileExists:  # Если файл не существует
             print(f'Файл {fileName} не найден и будет создан')
@@ -27,9 +38,7 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
             print(f'- Последняя запись файла: {fileBars.index[-1]}')
             print(f'- Кол-во записей в файле: {len(fileBars)}')
 
-        newBars = qpProvider.GetCandlesFromDataSource(classCode, secCode, interval, 0)["data"]  # Получаем все свечки
-        if skipLast:  # Для дневных баров мы получаем еще несформировавшийся бар текущей сессии. Он нам не нужен
-            newBars = newBars[:-1]  # Берем все бары кроме последнего
+        newBars = qpProvider.GetCandlesFromDataSource(class_code, secCode, interval, 0)["data"]  # Получаем все свечки
         pdBars = pd.DataFrame.from_dict(pd.json_normalize(newBars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
         pdBars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
                                'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
@@ -38,8 +47,18 @@ def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compr
         pdBars = pdBars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
         pdBars.index.name = 'datetime'  # Ставим название индекса даты/времени
         pdBars.volume = pd.to_numeric(pdBars.volume, downcast='integer')  # Объемы могут быть только целыми
+        if skipFirstDate:  # Если убираем бары на первую дату
+            lenWithFirstDate = len(pdBars)  # Кол-во баров до удаления на первую дату
+            firstDate = pdBars.index[0].date()  # Первая дата
+            pdBars.drop(pdBars[(pdBars.index.date == firstDate)].index, inplace=True)  # Удаляем их
+            print(f'- Удалено баров на первую дату {firstDate}: {lenWithFirstDate - len(pdBars)}')
+        if skipLastDate:  # Если убираем бары на последнюю дату
+            lenWithLastDate = len(pdBars)  # Кол-во баров до удаления на последнюю дату
+            lastDate = pdBars.index[-1].date()  # Последняя дата
+            pdBars.drop(pdBars[(pdBars.index.date == lastDate)].index, inplace=True)  # Удаляем их
+            print(f'- Удалено баров на последнюю дату {lastDate}: {lenWithLastDate - len(pdBars)}')
         if not fourPriceDoji:  # Если удаляем дожи 4-х цен
-            lenWithDoji = len(pdBars)  # Кол-во записей до удаления дожи
+            lenWithDoji = len(pdBars)  # Кол-во баров до удаления дожи
             pdBars.drop(pdBars[(pdBars.high == pdBars.low)].index, inplace=True)  # Удаляем их по условия High == Low
             print('- Удалено дожи 4-х цен:', lenWithDoji - len(pdBars))
         print('- Первая запись в QUIK:', pdBars.index[0])
@@ -57,25 +76,19 @@ if __name__ == '__main__':  # Точка входа при запуске это
     qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
     # qpProvider = QuikPy(Host='<Ваш IP адрес>')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
 
-    timeFrame = 'M'  # Временной интервал: 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
-    compression1 = 5  # Кол-во минут для минутного графика. Для остальных = 1
-    compression2 = 15
-
     classCode = 'TQBR'  # Акции ММВБ
+    # classCode = 'SPBFUT'  # Фьючерсы РТС
     # secCodes = ('GAZP',)  # Для тестов
     secCodes = ('GAZP', 'LKOH', 'SBER', 'NVTK', 'YNDX', 'GMKN', 'ROSN', 'MTLR', 'MGNT', 'CHMF',
                 'PHOR', 'VTBR', 'TCSG', 'PLZL', 'ALRS', 'MAGN', 'CBOM', 'SMLT', 'MVID', 'AFLT',
                 'SNGS', 'SBERP', 'NLMK', 'RUAL', 'MTSS', 'TATN', 'MOEX', 'VKCO', 'MTLRP', 'AFKS',
                 'SNGSP', 'PIKK', 'ISKJ', 'OZON', 'POLY', 'HYDR', 'RASP', 'IRAO', 'SIBN', 'FESH')  # TOP 40 акций ММВБ
+    # secCodes = ('SiM2', 'RIM2')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     SaveCandlesToFile(classCode, secCodes, skipLast=True, fourPriceDoji=True)  # Получаем дневные бары без последнего бара с дожи 4-х цен
-    SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
-    SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
-
-    classCode = 'SPBFUT'  # Фьючерсы РТС
-    secCodes = ('SiM2', 'RIM2')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    SaveCandlesToFile(classCode, secCodes, skipLast=True, fourPriceDoji=True)  # Получаем дневные бары без последнего бара с дожи 4-х цен
-    SaveCandlesToFile(classCode, secCodes, timeFrame, compression1)  # Получаем 5-и минутные бары
-    SaveCandlesToFile(classCode, secCodes, timeFrame, compression2)  # Получаем 15-и минутные бары
+    SaveCandlesToFile(classCode, secCodes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # Получаем 5-и минутные бары первый раз
+    # SaveCandlesToFile(classCode, secCodes, 'M', 5, skipLastDate=True)  # Получаем 5-и минутные бары к уже имеющимся в файле
+    SaveCandlesToFile(classCode, secCodes, 'M', 15, skipFirstDate=True, skipLastDate=True)  # Получаем 15-и минутные бары первый раз
+    # SaveCandlesToFile(classCode, secCodes, 'M', 15, skipLastDate=True)  # Получаем 15-и минутные бары к уже имеющимся в файле
 
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
     print(f'Скрипт выполнен за {(time() - startTime):.2f} с')
