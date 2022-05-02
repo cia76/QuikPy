@@ -5,11 +5,11 @@ import pandas as pd
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
-def SaveCandlesToFile(class_code='TQBR', secCodes=('SBER',), timeFrame='D', compression=1,
+def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compression=1,
                       skipFirstDate=False, skipLastDate=False, fourPriceDoji=False):
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
 
-    :param class_code: Код рынка
+    :param classCode: Код рынка
     :param secCodes: Коды тикеров в виде кортежа
     :param timeFrame: Временной интервал 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
     :param compression: Кол-во минут для минутного графика. Для остальных = 1
@@ -26,7 +26,7 @@ def SaveCandlesToFile(class_code='TQBR', secCodes=('SBER',), timeFrame='D', comp
         interval = 23200  # В минутах
 
     for secCode in secCodes:  # Пробегаемся по всем тикерам
-        fileName = f'..\\..\\Data\\{class_code}.{secCode}_{timeFrame}{compression}.txt'
+        fileName = f'..\\..\\Data\\{classCode}.{secCode}_{timeFrame}{compression}.txt'
         isFileExists = os.path.isfile(fileName)  # Существует ли файл
         if not isFileExists:  # Если файл не существует
             print(f'Файл {fileName} не найден и будет создан')
@@ -38,7 +38,7 @@ def SaveCandlesToFile(class_code='TQBR', secCodes=('SBER',), timeFrame='D', comp
             print(f'- Последняя запись файла: {fileBars.index[-1]}')
             print(f'- Кол-во записей в файле: {len(fileBars)}')
 
-        newBars = qpProvider.GetCandlesFromDataSource(class_code, secCode, interval, 0)["data"]  # Получаем все свечки
+        newBars = qpProvider.GetCandlesFromDataSource(classCode, secCode, interval, 0)["data"]  # Получаем все свечки
         pdBars = pd.DataFrame.from_dict(pd.json_normalize(newBars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
         pdBars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
                                'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
