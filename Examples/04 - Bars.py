@@ -84,11 +84,16 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 'SNGS', 'SBERP', 'NLMK', 'RUAL', 'MTSS', 'TATN', 'MOEX', 'VKCO', 'MTLRP', 'AFKS',
                 'SNGSP', 'PIKK', 'ISKJ', 'OZON', 'POLY', 'HYDR', 'RASP', 'IRAO', 'SIBN', 'FESH')  # TOP 40 акций ММВБ
     # secCodes = ('SiM2', 'RIM2')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    SaveCandlesToFile(classCode, secCodes, skipLast=True, fourPriceDoji=True)  # Получаем дневные бары без последнего бара с дожи 4-х цен
-    SaveCandlesToFile(classCode, secCodes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # Получаем 5-и минутные бары первый раз
-    # SaveCandlesToFile(classCode, secCodes, 'M', 5, skipLastDate=True)  # Получаем 5-и минутные бары к уже имеющимся в файле
-    SaveCandlesToFile(classCode, secCodes, 'M', 15, skipFirstDate=True, skipLastDate=True)  # Получаем 15-и минутные бары первый раз
-    # SaveCandlesToFile(classCode, secCodes, 'M', 15, skipLastDate=True)  # Получаем 15-и минутные бары к уже имеющимся в файле
+
+    # Получаем бары в первый раз / когда идет сессия
+    SaveCandlesToFile(classCode, secCodes, skipLastDate=True, fourPriceDoji=True)  # Дневные бары
+    SaveCandlesToFile(classCode, secCodes, 'M', 15, skipFirstDate=True, skipLastDate=True)  # 15-и минутные бары
+    SaveCandlesToFile(classCode, secCodes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # 5-и минутные бары
+
+    # Получаем бары, когда сессия не идет
+    # SaveCandlesToFile(classCode, secCodes, fourPriceDoji=True)  # Дневные бары
+    # SaveCandlesToFile(classCode, secCodes, 'M', 15, skipFirstDate=True)  # 15-и минутные бары
+    # SaveCandlesToFile(classCode, secCodes, 'M', 5, skipFirstDate=True)  # 5-и минутные бары
 
     qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
     print(f'Скрипт выполнен за {(time() - startTime):.2f} с')
