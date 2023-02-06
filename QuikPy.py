@@ -13,7 +13,7 @@ class Singleton(type):
     def __call__(cls, *args, **kwargs):
         """Вызов класса"""
         if cls._singleton is None:  # Если класса нет в экземплярах класса
-            cls._singleton  = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._singleton = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._singleton  # Возвращаем экземпляр класса
 
 
@@ -33,7 +33,7 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
         """Поток обработки результатов функций обратного вызова"""
         socketCallbacks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Соединение для функций обратного вызова
         socketCallbacks.connect((self.Host, self.CallbacksPort))  # Открываем соединение для функций обратного вызова
-        currentThread = threading.currentThread()  # Получаем текущий поток
+        currentThread = threading.current_thread()  # Получаем текущий поток
         fragments = []  # Будем получать ответ в виде списка фрагментов. Они могут быть разной длины. Ответ может состоять из нескольких фрагментов
         while getattr(currentThread, 'process', True):  # Пока поток нужен
             while True:  # Пока есть что-то в буфере ответов
