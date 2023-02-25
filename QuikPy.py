@@ -381,7 +381,7 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
 
     def GetFuturesHoldings(self, TransId=0):
         """Все фьючерсные позиции"""
-        return self.ProcessRequest({'data': '', 'id': TransId, 'cmd': 'getFuturesHolding', 't': ''})
+        return self.ProcessRequest({'data': '', 'id': TransId, 'cmd': 'getFuturesClientHoldings', 't': ''})
 
     # 3.7 Функция для получения информации по инструменту
 
