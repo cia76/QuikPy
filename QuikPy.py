@@ -1,6 +1,7 @@
-import socket  # Обращаться к LUA скриптам QuikSharp будем через соединения
-import threading  # Результат работы функций обратного вызова будем получать в отдельном потоке
-import json  # Передавать и принимать данные в QUIK будем через JSON
+from socket import socket, AF_INET, SOCK_STREAM  # Обращаться к LUA скриптам QuikSharp будем через соединения
+from threading import current_thread, Thread  # Результат работы функций обратного вызова будем получать в отдельном потоке
+from json import loads, dumps  # Передавать и принимать данные в QUIK будем через JSON
+from json.decoder import JSONDecodeError  # Ошибка декодирования JSON
 
 
 class Singleton(type):
@@ -31,9 +32,9 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
 
     def CallbackHandler(self):
         """Поток обработки результатов функций обратного вызова"""
-        socketCallbacks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Соединение для функций обратного вызова
+        socketCallbacks = socket(AF_INET, SOCK_STREAM)  # Соединение для функций обратного вызова
         socketCallbacks.connect((self.Host, self.CallbacksPort))  # Открываем соединение для функций обратного вызова
-        currentThread = threading.current_thread()  # Получаем текущий поток
+        currentThread = current_thread()  # Получаем текущий поток
         fragments = []  # Будем получать ответ в виде списка фрагментов. Они могут быть разной длины. Ответ может состоять из нескольких фрагментов
         while getattr(currentThread, 'process', True):  # Пока поток нужен
             while True:  # Пока есть что-то в буфере ответов
@@ -48,8 +49,8 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
                 if data == '':  # Если функция обратного вызова пустая
                     continue  # то ее не разбираем, переходим на следующую функцию, дальше не продолжаем
                 try:  # Пробуем разобрать функцию обратного вызова
-                    data = json.loads(data)  # Возвращаем полученный ответ в формате JSON
-                except json.decoder.JSONDecodeError:  # Если разобрать не смогли (пришла не вся строка)
+                    data = loads(data)  # Возвращаем полученный ответ в формате JSON
+                except JSONDecodeError:  # Если разобрать не смогли (пришла не вся строка)
                     fragments.append(data)  # то, что не разобрали ставим в список фрагментов
                     break  # т.к. неполной может быть только последняя строка, то выходим из разбора функций обратного выходва
 
@@ -110,7 +111,7 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
 
     def ProcessRequest(self, Request):
         """Отправляем запрос в QUIK, получаем ответ из QUIK"""
-        rawData = json.dumps(Request)  # Переводим запрос в формат JSON
+        rawData = dumps(Request)  # Переводим запрос в формат JSON
         self.socketRequests.sendall(f'{rawData}\r\n'.encode())  # Отправляем запрос в QUIK
         fragments = []  # Гораздо быстрее получать ответ в виде списка фрагментов
         while True:  # Пока фрагменты есть в буфере
@@ -119,8 +120,8 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
             if len(fragment) < self.bufferSize:  # Если в принятом фрагменте данных меньше чем размер буфера
                 data = ''.join(fragments)  # Собираем список фрагментов в строку
                 try:  # Бывает ситуация, когда данных приходит меньше, но это еще не конец данных
-                    return json.loads(data)  # Попробуем вернуть ответ в формате JSON в Windows кодировке 1251
-                except json.decoder.JSONDecodeError:  # Если это еще не конец данных
+                    return loads(data)  # Попробуем вернуть ответ в формате JSON в Windows кодировке 1251
+                except JSONDecodeError:  # Если это еще не конец данных
                     pass  # то ждем фрагментов в буфере дальше
 
     # Инициализация и вход
@@ -161,10 +162,10 @@ class QuikPy(metaclass=Singleton):  # Singleton класс
         self.Host = Host  # IP адрес или название хоста
         self.RequestsPort = RequestsPort  # Порт для отправки запросов и получения ответов
         self.CallbacksPort = CallbacksPort  # Порт для функций обратного вызова
-        self.socketRequests = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Создаем соединение для запросов
+        self.socketRequests = socket(AF_INET, SOCK_STREAM)  # Создаем соединение для запросов
         self.socketRequests.connect((self.Host, self.RequestsPort))  # Открываем соединение для запросов
 
-        self.callbackThread = threading.Thread(target=self.CallbackHandler, name='CallbackThread')  # Создаем поток обработки функций обратного вызова
+        self.callbackThread = Thread(target=self.CallbackHandler, name='CallbackThread')  # Создаем поток обработки функций обратного вызова
         self.callbackThread.start()  # Запускаем поток
 
     def __enter__(self):
