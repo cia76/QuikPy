@@ -4,21 +4,22 @@ from json import loads, dumps  # Передавать и принимать да
 from json.decoder import JSONDecodeError  # Ошибка декодирования JSON
 
 
-class Singleton(type):
-    """Метакласс для создания Singleton классов"""
-    def __init__(cls, *args, **kwargs):
-        """Инициализация класса"""
-        super(Singleton, cls).__init__(*args, **kwargs)
-        cls._singleton = None  # Экземпляра класса еще нет
-
-    def __call__(cls, *args, **kwargs):
-        """Вызов класса"""
-        if cls._singleton is None:  # Если класса нет в экземплярах класса
-            cls._singleton = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._singleton  # Возвращаем экземпляр класса
-
-
-class QuikPy(metaclass=Singleton):  # Singleton класс
+# class Singleton(type):
+#     """Метакласс для создания Singleton классов"""
+#     def __init__(cls, *args, **kwargs):
+#         """Инициализация класса"""
+#         super(Singleton, cls).__init__(*args, **kwargs)  # то создаем зкземпляр класса
+#         cls._singleton = None  # Экземпляра класса еще нет
+#
+#     def __call__(cls, *args, **kwargs):
+#         """Вызов класса"""
+#         if cls._singleton is None:  # Если класса нет в экземплярах класса
+#             cls._singleton = super(Singleton, cls).__call__(*args, **kwargs)
+#         return cls._singleton  # Возвращаем экземпляр класса
+#
+#
+# class QuikPy(metaclass=Singleton):  # Singleton класс
+class QuikPy:
     """Работа с Quik из Python через LUA скрипты QuikSharp https://github.com/finsight/QUIKSharp/tree/master/src/QuikSharp/lua
      На основе Документации по языку LUA в QUIK из https://arqatech.com/ru/support/files/
      """
