@@ -5,97 +5,98 @@ import pandas as pd
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
-def SaveCandlesToFile(classCode='TQBR', secCodes=('SBER',), timeFrame='D', compression=1,
-                      skipFirstDate=False, skipLastDate=False, fourPriceDoji=False):
+def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D', compression=1,
+                         skip_first_date=False, skip_last_date=False, four_price_doji=False):
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
 
-    :param classCode: Код рынка
-    :param secCodes: Коды тикеров в виде кортежа
-    :param timeFrame: Временной интервал 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
-    :param compression: Кол-во минут для минутного графика. Для остальных = 1
-    :param skipFirstDate: Убрать бары на первую полученную дату
-    :param skipLastDate: Убрать бары на последнюю полученную дату
-    :param fourPriceDoji: Оставить бары с дожи 4-х цен
+    :param str class_code: Код площадки
+    :param tuple sec_codes: Коды тикеров в виде кортежа
+    :param str time_frame: Временной интервал 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
+    :param int compression: Кол-во минут для минутного графика. Для остальных = 1
+    :param bool skip_first_date: Убрать бары на первую полученную дату
+    :param bool skip_last_date: Убрать бары на последнюю полученную дату
+    :param bool four_price_doji: Оставить бары с дожи 4-х цен
     """
     interval = compression  # Для минутных временнЫх интервалов ставим кол-во минут
-    if timeFrame == 'D':  # Дневной временной интервал
+    if time_frame == 'D':  # Дневной временной интервал
         interval = 1440  # В минутах
-    elif timeFrame == 'W':  # Недельный временной интервал
+    elif time_frame == 'W':  # Недельный временной интервал
         interval = 10080  # В минутах
-    elif timeFrame == 'MN':  # Месячный временной интервал
+    elif time_frame == 'MN':  # Месячный временной интервал
         interval = 23200  # В минутах
 
-    for secCode in secCodes:  # Пробегаемся по всем тикерам
-        fileName = f'..\\..\\Data\\{classCode}.{secCode}_{timeFrame}{compression}.txt'
-        isFileExists = os.path.isfile(fileName)  # Существует ли файл
-        if not isFileExists:  # Если файл не существует
-            print(f'Файл {fileName} не найден и будет создан')
-        else:  # Файл существует
-            print(f'Получение файла {fileName}')
-            fileBars = pd.read_csv(fileName, sep='\t', index_col='datetime')  # Считываем файл в DataFrame
-            fileBars.index = pd.to_datetime(fileBars.index, format='%d.%m.%Y %H:%M')  # Переводим индекс в формат datetime
-            print(f'- Первая запись файла: {fileBars.index[0]}')
-            print(f'- Последняя запись файла: {fileBars.index[-1]}')
-            print(f'- Кол-во записей в файле: {len(fileBars)}')
-
-        newBars = qpProvider.GetCandlesFromDataSource(classCode, secCode, interval, 0)["data"]  # Получаем все свечки
-        pdBars = pd.DataFrame.from_dict(pd.json_normalize(newBars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
-        pdBars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
-                               'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
-                      inplace=True)  # Чтобы получить дату/время переименовываем колонки
-        pdBars.index = pd.to_datetime(pdBars[['year', 'month', 'day', 'hour', 'minute', 'second']])  # Собираем дату/время из колонок
-        pdBars = pdBars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
-        pdBars.index.name = 'datetime'  # Ставим название индекса даты/времени
-        pdBars.volume = pd.to_numeric(pdBars.volume, downcast='integer')  # Объемы могут быть только целыми
-        if skipFirstDate:  # Если убираем бары на первую дату
-            lenWithFirstDate = len(pdBars)  # Кол-во баров до удаления на первую дату
-            firstDate = pdBars.index[0].date()  # Первая дата
-            pdBars.drop(pdBars[(pdBars.index.date == firstDate)].index, inplace=True)  # Удаляем их
-            print(f'- Удалено баров на первую дату {firstDate}: {lenWithFirstDate - len(pdBars)}')
-        if skipLastDate:  # Если убираем бары на последнюю дату
-            lenWithLastDate = len(pdBars)  # Кол-во баров до удаления на последнюю дату
-            lastDate = pdBars.index[-1].date()  # Последняя дата
-            pdBars.drop(pdBars[(pdBars.index.date == lastDate)].index, inplace=True)  # Удаляем их
-            print(f'- Удалено баров на последнюю дату {lastDate}: {lenWithLastDate - len(pdBars)}')
-        if not fourPriceDoji:  # Если удаляем дожи 4-х цен
-            lenWithDoji = len(pdBars)  # Кол-во баров до удаления дожи
-            pdBars.drop(pdBars[(pdBars.high == pdBars.low)].index, inplace=True)  # Удаляем их по условия High == Low
-            print('- Удалено дожи 4-х цен:', lenWithDoji - len(pdBars))
-        print('- Первая запись в QUIK:', pdBars.index[0])
-        print('- Последняя запись в QUIK:', pdBars.index[-1])
-        print('- Кол-во записей в QUIK:', len(pdBars))
-
-        if isFileExists:  # Если файл существует
-            pdBars = pd.concat([fileBars, pdBars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из QUIK, убираем дубликаты, сортируем заново
-        pdBars.to_csv(fileName, sep='\t', date_format='%d.%m.%Y %H:%M')
-        print(f'- В файл {fileName} сохранено записей: {len(pdBars)}')
+    for sec_code in sec_codes:  # Пробегаемся по всем тикерам
+        file_bars = None  # Дальше будем пытаться получить бары из файла
+        file_name = f'{datapath}{class_code}.{sec_code}_{time_frame}{compression}.txt'
+        file_exists = os.path.isfile(file_name)  # Существует ли файл
+        if file_exists:  # Если файл существует
+            print(f'Получение файла {file_name}')
+            file_bars = pd.read_csv(file_name, sep='\t', index_col='datetime')  # Считываем файл в DataFrame
+            file_bars.index = pd.to_datetime(file_bars.index, format='%d.%m.%Y %H:%M')  # Переводим индекс в формат datetime
+            print(f'- Первая запись файла: {file_bars.index[0]}')
+            print(f'- Последняя запись файла: {file_bars.index[-1]}')
+            print(f'- Кол-во записей в файле: {len(file_bars)}')
+        else:  # Файл не существует
+            print(f'Файл {file_name} не найден и будет создан')
+        new_bars = qp_provider.GetCandlesFromDataSource(class_code, sec_code, interval, 0)['data']  # Получаем все бары из QUIK
+        pd_bars = pd.json_normalize(new_bars)  # Переводим список баров в pandas DataFrame
+        pd_bars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
+                                'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
+                       inplace=True)  # Чтобы получить дату/время переименовываем колонки
+        pd_bars.index = pd.to_datetime(pd_bars[['year', 'month', 'day', 'hour', 'minute', 'second']])  # Собираем дату/время из колонок
+        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
+        pd_bars.index.name = 'datetime'  # Ставим название индекса даты/времени
+        pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
+        if skip_first_date:  # Если убираем бары на первую дату
+            len_with_first_date = len(pd_bars)  # Кол-во баров до удаления на первую дату
+            first_date = pd_bars.index[0].date()  # Первая дата
+            pd_bars.drop(pd_bars[(pd_bars.index.date == first_date)].index, inplace=True)  # Удаляем их
+            print(f'- Удалено баров на первую дату {first_date}: {len_with_first_date - len(pd_bars)}')
+        if skip_last_date:  # Если убираем бары на последнюю дату
+            len_with_last_date = len(pd_bars)  # Кол-во баров до удаления на последнюю дату
+            last_date = pd_bars.index[-1].date()  # Последняя дата
+            pd_bars.drop(pd_bars[(pd_bars.index.date == last_date)].index, inplace=True)  # Удаляем их
+            print(f'- Удалено баров на последнюю дату {last_date}: {len_with_last_date - len(pd_bars)}')
+        if not four_price_doji:  # Если удаляем дожи 4-х цен
+            len_with_doji = len(pd_bars)  # Кол-во баров до удаления дожи
+            pd_bars.drop(pd_bars[(pd_bars.high == pd_bars.low)].index, inplace=True)  # Удаляем их по условию High == Low
+            print('- Удалено дожи 4-х цен:', len_with_doji - len(pd_bars))
+        print('- Первая запись в QUIK:', pd_bars.index[0])
+        print('- Последняя запись в QUIK:', pd_bars.index[-1])
+        print('- Кол-во записей в QUIK:', len(pd_bars))
+        if file_exists:  # Если файл существует
+            pd_bars = pd.concat([file_bars, pd_bars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из QUIK, убираем дубликаты, сортируем заново
+        pd_bars.to_csv(file_name, sep='\t', date_format='%d.%m.%Y %H:%M')
+        print(f'- В файл {file_name} сохранено записей: {len(pd_bars)}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    startTime = time()  # Время начала запуска скрипта
-    qpProvider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
-    # qpProvider = QuikPy(Host='<Ваш IP адрес>')  # Вызываем конструктор QuikPy с подключением к удаленному компьютеру с QUIK
+    start_time = time()  # Время начала запуска скрипта
+    qp_provider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
 
-    classCode = 'TQBR'  # Акции ММВБ
-    # classCode = 'SPBFUT'  # Фьючерсы РТС
-    # secCodes = ('SBER',)  # Для тестов
-    secCodes = ('GAZP', 'LKOH', 'SBER', 'NVTK', 'YNDX', 'GMKN', 'ROSN', 'MTLR', 'MGNT', 'CHMF',
-                'PHOR', 'VTBR', 'TCSG', 'PLZL', 'ALRS', 'MAGN', 'CBOM', 'SMLT', 'MVID', 'AFLT',
-                'SNGS', 'SBERP', 'NLMK', 'RUAL', 'MTSS', 'TATN', 'MOEX', 'VKCO', 'MTLRP', 'AFKS',
-                'SNGSP', 'PIKK', 'ISKJ', 'OZON', 'POLY', 'HYDR', 'RASP', 'IRAO', 'SIBN', 'FESH')  # TOP 40 акций ММВБ
-    # secCodes = ('SiM3', 'RIM3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    class_code = 'TQBR'  # Акции ММВБ
+    # class_code = 'SPBFUT'  # Фьючерсы
+    sec_codes = ('SBER', 'GAZP', 'VTBR', 'LKOH', 'MTLR', 'GMKN', 'YNDX', 'AFLT', 'PLZL', 'SBERP',
+                 'NVTK', 'AFKS', 'SMLT', 'GECO', 'CHMF', 'MGNT', 'POLY', 'TATN', 'ROSN', 'MAGN',
+                 'ALRS', 'SNGS', 'NLMK', 'MTSS', 'BELU', 'TRNFP', 'UPRO', 'BANEP', 'SNGSP', 'RUAL',
+                 'BSPB', 'CBOM', 'RNFT', 'MOEX', 'FEES', 'IRAO', 'ISKJ', 'PHOR', 'FLOT', 'RTKM')  # TOP 40 акций ММВБ
+    # sec_codes = ('SBER',)  # Для тестов
+    # sec_codes = ('SiM3', 'RIM3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    datapath = '..\\..\\Data\\'  # Путь к файлам (Windows)
 
     # Получаем бары в первый раз / когда идет сессия
-    # SaveCandlesToFile(classCode, secCodes, skipLastDate=True, fourPriceDoji=True)  # Дневные бары
-    # SaveCandlesToFile(classCode, secCodes, 'M', 15, skipFirstDate=True, skipLastDate=True)  # 15-и минутные бары
-    # SaveCandlesToFile(classCode, secCodes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # 5-и минутные бары
-    # SaveCandlesToFile(classCode, secCodes, 'M', 1, skipFirstDate=True, skipLastDate=True)  # минутные бары
+    # save_candles_to_file(classCode, secCodes, skipLastDate=True, fourPriceDoji=True)  # Дневные бары
+    # save_candles_to_file(classCode, secCodes, 'M', 60, skipFirstDate=True, skipLastDate=True)  # часовые бары
+    # save_candles_to_file(classCode, secCodes, 'M', 15, skipFirstDate=True, skipLastDate=True)  # 15-и минутные бары
+    # save_candles_to_file(classCode, secCodes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # 5-и минутные бары
+    # save_candles_to_file(classCode, secCodes, 'M', 1, skipFirstDate=True, skipLastDate=True)  # минутные бары
 
     # Получаем бары, когда сессия не идет
-    SaveCandlesToFile(classCode, secCodes, fourPriceDoji=True)  # Дневные бары
-    SaveCandlesToFile(classCode, secCodes, 'M', 15, skipFirstDate=True)  # 15-и минутные бары
-    SaveCandlesToFile(classCode, secCodes, 'M', 5, skipFirstDate=True)  # 5-и минутные бары
-    # SaveCandlesToFile(classCode, secCodes, 'M', 1, skipFirstDate=True)  # минутные бары
+    save_candles_to_file(class_code, sec_codes, four_price_doji=True)  # Дневные бары
+    save_candles_to_file(class_code, sec_codes, 'M', 60, skip_first_date=True)  # часовые бары
+    save_candles_to_file(class_code, sec_codes, 'M', 15, skip_first_date=True)  # 15-и минутные бары
+    save_candles_to_file(class_code, sec_codes, 'M', 5, skip_first_date=True)  # 5-и минутные бары
+    save_candles_to_file(class_code, sec_codes, 'M', 1, skip_first_date=True)  # минутные бары
 
-    qpProvider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
-    print(f'Скрипт выполнен за {(time() - startTime):.2f} с')
+    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    print(f'Скрипт выполнен за {(time() - start_time):.2f} с')
