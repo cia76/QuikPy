@@ -76,10 +76,10 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     class_code = 'TQBR'  # Акции ММВБ
     # class_code = 'SPBFUT'  # Фьючерсы
-    sec_codes = ('SBER', 'GAZP', 'VTBR', 'LKOH', 'MTLR', 'GMKN', 'YNDX', 'AFLT', 'PLZL', 'SBERP',
-                 'NVTK', 'AFKS', 'SMLT', 'GECO', 'CHMF', 'MGNT', 'POLY', 'TATN', 'ROSN', 'MAGN',
-                 'ALRS', 'SNGS', 'NLMK', 'MTSS', 'BELU', 'TRNFP', 'UPRO', 'BANEP', 'SNGSP', 'RUAL',
-                 'BSPB', 'CBOM', 'RNFT', 'MOEX', 'FEES', 'IRAO', 'ISKJ', 'PHOR', 'FLOT', 'RTKM')  # TOP 40 акций ММВБ
+    sec_codes = ('SBER', 'VTBR', 'GAZP', 'MTLR', 'LKOH', 'PLZL', 'SBERP', 'BSPB', 'POLY', 'RNFT',
+                 'GMKN', 'AFLT', 'NVTK', 'TATN', 'YNDX', 'MGNT', 'ROSN', 'AFKS', 'NLMK', 'ALRS',
+                 'MOEX', 'SMLT', 'MAGN', 'CHMF', 'CBOM', 'MTLRP', 'SNGS', 'BANEP', 'MTSS', 'IRAO',
+                 'SNGSP', 'SELG', 'UPRO', 'RUAL', 'TRNFP', 'FEES', 'SGZH', 'BANE', 'PHOR', 'PIKK')  # TOP 40 акций ММВБ
     # sec_codes = ('SBER',)  # Для тестов
     # sec_codes = ('SiM3', 'RIM3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     datapath = '..\\..\\Data\\'  # Путь к файлам (Windows)
