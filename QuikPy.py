@@ -20,6 +20,7 @@ from json.decoder import JSONDecodeError  # Ошибка декодирован�
 #
 # class QuikPy(metaclass=Singleton):  # Singleton класс
 class QuikPy:
+
     """Работа с Quik из Python через LUA скрипты QuikSharp https://github.com/finsight/QUIKSharp/tree/master/src/QuikSharp/lua
      На основе Документации по языку LUA в QUIK из https://arqatech.com/ru/support/files/
      """
@@ -114,7 +115,7 @@ class QuikPy:
         """Отправляем запрос в QUIK, получаем ответ из QUIK"""
         # Issue 13. В QUIK некорректно отображаются русские буквы UTF8
         raw_data = f'{request}\r\n'.replace("'", '"').encode('cp1251')  # Переводим в кодировку Windows 1251
-        self.socket_requests.sendall(f'{raw_data}\r\n'.encode())  # Отправляем запрос в QUIK
+        self.socket_requests.sendall(raw_data)  # Отправляем запрос в QUIK
         fragments = []  # Гораздо быстрее получать ответ в виде списка фрагментов
         while True:  # Пока фрагменты есть в буфере
             fragment = self.socket_requests.recv(self.buffer_size)  # Читаем фрагмент из буфера
