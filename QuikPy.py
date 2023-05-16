@@ -23,9 +23,9 @@ class QuikPy:
     """Работа с Quik из Python через LUA скрипты QuikSharp https://github.com/finsight/QUIKSharp/tree/master/src/QuikSharp/lua
      На основе Документации по языку LUA в QUIK из https://arqatech.com/ru/support/files/
      """
-    bufferSize = 1048576  # Размер буфера приема в байтах (1 МБайт)
-    socketRequests = None  # Соединение для запросов
-    callbackThread = None  # Поток обработки функций обратного вызова
+    buffer_size = 1048576  # Размер буфера приема в байтах (1 МБайт)
+    socket_requests = None  # Соединение для запросов
+    callback_thread = None  # Поток обработки функций обратного вызова
 
     def DefaultHandler(self, data):
         """Пустой обработчик события по умолчанию. Его можно заменить на пользовательский"""
@@ -39,9 +39,9 @@ class QuikPy:
         fragments = []  # Будем получать ответ в виде списка фрагментов. Они могут быть разной длины. Ответ может состоять из нескольких фрагментов
         while getattr(currentThread, 'process', True):  # Пока поток нужен
             while True:  # Пока есть что-то в буфере ответов
-                fragment = socketCallbacks.recv(self.bufferSize)  # Читаем фрагмент из буфера
+                fragment = socketCallbacks.recv(self.buffer_size)  # Читаем фрагмент из буфера
                 fragments.append(fragment.decode('cp1251'))  # Переводим фрагмент в Windows кодировку 1251, добавляем в список
-                if len(fragment) < self.bufferSize:  # Если в принятом фрагменте данных меньше чем размер буфера
+                if len(fragment) < self.buffer_size:  # Если в принятом фрагменте данных меньше чем размер буфера
                     break  # то, возможно, это был последний фрагмент, выходим из чтения буфера
             data = ''.join(fragments)  # Собираем список фрагментов в строку
             dataList = data.split('\n')  # Одновременно могут прийти несколько функций обратного вызова, разбираем их по одной
@@ -110,15 +110,16 @@ class QuikPy:
                     self.OnError(data)
         socketCallbacks.close()  # Закрываем соединение для ответов
 
-    def ProcessRequest(self, Request):
+    def ProcessRequest(self, request):
         """Отправляем запрос в QUIK, получаем ответ из QUIK"""
-        rawData = dumps(Request)  # Переводим запрос в формат JSON
-        self.socketRequests.sendall(f'{rawData}\r\n'.encode())  # Отправляем запрос в QUIK
+        # Issue 13. В QUIK некорректно отображаются русские буквы UTF8
+        raw_data = f'{request}\r\n'.replace("'", '"').encode('cp1251')  # Переводим в кодировку Windows 1251
+        self.socket_requests.sendall(f'{raw_data}\r\n'.encode())  # Отправляем запрос в QUIK
         fragments = []  # Гораздо быстрее получать ответ в виде списка фрагментов
         while True:  # Пока фрагменты есть в буфере
-            fragment = self.socketRequests.recv(self.bufferSize)  # Читаем фрагмент из буфера
+            fragment = self.socket_requests.recv(self.buffer_size)  # Читаем фрагмент из буфера
             fragments.append(fragment.decode('cp1251'))  # Переводим фрагмент в Windows кодировку 1251, добавляем в список
-            if len(fragment) < self.bufferSize:  # Если в принятом фрагменте данных меньше чем размер буфера
+            if len(fragment) < self.buffer_size:  # Если в принятом фрагменте данных меньше чем размер буфера
                 data = ''.join(fragments)  # Собираем список фрагментов в строку
                 try:  # Бывает ситуация, когда данных приходит меньше, но это еще не конец данных
                     return loads(data)  # Попробуем вернуть ответ в формате JSON в Windows кодировке 1251
@@ -163,11 +164,11 @@ class QuikPy:
         self.Host = Host  # IP адрес или название хоста
         self.RequestsPort = RequestsPort  # Порт для отправки запросов и получения ответов
         self.CallbacksPort = CallbacksPort  # Порт для функций обратного вызова
-        self.socketRequests = socket(AF_INET, SOCK_STREAM)  # Создаем соединение для запросов
-        self.socketRequests.connect((self.Host, self.RequestsPort))  # Открываем соединение для запросов
+        self.socket_requests = socket(AF_INET, SOCK_STREAM)  # Создаем соединение для запросов
+        self.socket_requests.connect((self.Host, self.RequestsPort))  # Открываем соединение для запросов
 
-        self.callbackThread = Thread(target=self.CallbackHandler, name='CallbackThread')  # Создаем поток обработки функций обратного вызова
-        self.callbackThread.start()  # Запускаем поток
+        self.callback_thread = Thread(target=self.CallbackHandler, name='CallbackThread')  # Создаем поток обработки функций обратного вызова
+        self.callback_thread.start()  # Запускаем поток
 
     def __enter__(self):
         """Вход в класс, например, с with"""
@@ -583,8 +584,8 @@ class QuikPy:
 
     def CloseConnectionAndThread(self):
         """Закрытие соединения для запросов и потока обработки функций обратного вызова"""
-        self.socketRequests.close()  # Закрываем соединение для запросов
-        self.callbackThread.process = False  # Поток обработки функций обратного вызова больше не нужен
+        self.socket_requests.close()  # Закрываем соединение для запросов
+        self.callback_thread.process = False  # Поток обработки функций обратного вызова больше не нужен
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Выход из класса, например, с with"""
