@@ -3,16 +3,9 @@ from datetime import datetime
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QuikSharp
 
 
-def print_callback(data):
-    """Пользовательский обработчик события"""
-    print(data)  # Печатаем полученные данные
-
-
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    qp_provider = QuikPy()  # Провайдер работает с запущенным терминалом QUIK
-    # qp_provider2 = QuikPy(Host='<Адрес IP>', RequestsPort='<Порт запросов>', CallbacksPort='<Порт подписок>')  # Для каждого запущенного терминала будет создан свой экземпляр QuikPy
-    # print(f'Экземпляры класса совпадают: {qp_provider2 is qp_provider}')
-    # qp_provider2.CloseConnectionAndThread()
+    qp_provider = QuikPy()  # Подключение к локальному запущенному терминалу QUIK
+    # qp_provider = QuikPy(Host='<Адрес IP>', RequestsPort='<Порт запросов>', CallbacksPort='<Порт подписок>')  # Подключение к удаленному QUIK / по другим портам
 
     # Проверяем соединение
     print(f'Терминал QUIK подключен к серверу: {qp_provider.IsConnected()["data"] == 1}')
@@ -27,9 +20,9 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(f'Отправка сообщения в QUIK: {msg}{qp_provider.MessageInfo(msg)["data"]}')  # Проверка работы QUIK. Сообщение в QUIK должно показаться как информационное
 
     # Проверяем работу подписок
-    qp_provider.OnConnected = print_callback  # Нажимаем кнопку "Установить соединение" в QUIK
-    qp_provider.OnDisconnected = print_callback  # Нажимаем кнопку "Разорвать соединение" в QUIK
-    qp_provider.OnParam = print_callback  # Текущие параметры изменяются постоянно. Будем их смотреть, пока не нажмем Enter в консоли
+    qp_provider.OnConnected = lambda data: print(data)  # Нажимаем кнопку "Установить соединение" в QUIK
+    qp_provider.OnDisconnected = lambda data: print(data)  # Нажимаем кнопку "Разорвать соединение" в QUIK
+    qp_provider.OnParam = lambda data: print(data)  # Текущие параметры изменяются постоянно. Будем их смотреть, пока не нажмем Enter в консоли
 
     # Выход
     input('Enter - выход\n')

@@ -72,7 +72,7 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     start_time = time()  # Время начала запуска скрипта
-    qp_provider = QuikPy()  # Вызываем конструктор QuikPy с подключением к локальному компьютеру с QUIK
+    qp_provider = QuikPy()  # Подключение к локальному запущенному терминалу QUIK
 
     class_code = 'TQBR'  # Акции ММВБ
     # class_code = 'SPBFUT'  # Фьючерсы
@@ -81,7 +81,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                  'MOEX', 'SMLT', 'MAGN', 'CHMF', 'CBOM', 'MTLRP', 'SNGS', 'BANEP', 'MTSS', 'IRAO',
                  'SNGSP', 'SELG', 'UPRO', 'RUAL', 'TRNFP', 'FEES', 'SGZH', 'BANE', 'PHOR', 'PIKK')  # TOP 40 акций ММВБ
     # sec_codes = ('SBER',)  # Для тестов
-    # sec_codes = ('SiM3', 'RIM3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    # sec_codes = ('SiU3', 'RIU3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     datapath = '..\\..\\Data\\'  # Путь к файлам (Windows)
 
     # Получаем бары в первый раз / когда идет сессия
