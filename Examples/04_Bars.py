@@ -47,7 +47,7 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
         pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
         pd_bars.index.name = 'datetime'  # Ставим название индекса даты/времени
         pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
-        if skip_first_date:  # Если убираем бары на первую дату
+        if not file_exists and skip_first_date:  # Если файла нет, и убираем бары на первую дату
             len_with_first_date = len(pd_bars)  # Кол-во баров до удаления на первую дату
             first_date = pd_bars.index[0].date()  # Первая дата
             pd_bars.drop(pd_bars[(pd_bars.index.date == first_date)].index, inplace=True)  # Удаляем их
@@ -82,14 +82,15 @@ if __name__ == '__main__':  # Точка входа при запуске это
                  'SNGSP', 'SELG', 'UPRO', 'RUAL', 'TRNFP', 'FEES', 'SGZH', 'BANE', 'PHOR', 'PIKK')  # TOP 40 акций ММВБ
     # sec_codes = ('SBER',)  # Для тестов
     # sec_codes = ('SiU3', 'RIU3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    # datapath = '../../Data/'  # Путь к файлам (Linux)
     datapath = '..\\..\\Data\\'  # Путь к файлам (Windows)
 
     # Получаем бары в первый раз / когда идет сессия
-    # save_candles_to_file(classCode, secCodes, skipLastDate=True, fourPriceDoji=True)  # Дневные бары
-    # save_candles_to_file(classCode, secCodes, 'M', 60, skipFirstDate=True, skipLastDate=True)  # часовые бары
-    # save_candles_to_file(classCode, secCodes, 'M', 15, skipFirstDate=True, skipLastDate=True)  # 15-и минутные бары
-    # save_candles_to_file(classCode, secCodes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # 5-и минутные бары
-    # save_candles_to_file(classCode, secCodes, 'M', 1, skipFirstDate=True, skipLastDate=True)  # минутные бары
+    # save_candles_to_file(class_code, sec_codes,, skipLastDate=True, fourPriceDoji=True)  # Дневные бары
+    # save_candles_to_file(class_code, sec_codes,, 'M', 60, skipFirstDate=True, skipLastDate=True)  # часовые бары
+    # save_candles_to_file(class_code, sec_codes,, 'M', 15, skipFirstDate=True, skipLastDate=True)  # 15-и минутные бары
+    # save_candles_to_file(class_code, sec_codes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # 5-и минутные бары
+    # save_candles_to_file(class_code, sec_codes,, 'M', 1, skipFirstDate=True, skipLastDate=True)  # минутные бары
 
     # Получаем бары, когда сессия не идет
     save_candles_to_file(class_code, sec_codes, four_price_doji=True)  # Дневные бары
