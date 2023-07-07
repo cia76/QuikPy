@@ -12,7 +12,7 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
     :param str class_code: Код площадки
     :param tuple sec_codes: Коды тикеров в виде кортежа
     :param str time_frame: Временной интервал 'M'-Минуты, 'D'-дни, 'W'-недели, 'MN'-месяцы
-    :param int compression: Кол-во минут для минутного графика. Для остальных = 1
+    :param int compression: Кол-во минут для минутного графика: 0 (тик), 1, 2, 3, 4, 5, 6, 10, 15, 20, 30, 60 (1 час), 120 (2 часа), 240 (4 часа). Для остальных = 1
     :param bool skip_first_date: Убрать бары на первую полученную дату
     :param bool skip_last_date: Убрать бары на последнюю полученную дату
     :param bool four_price_doji: Оставить бары с дожи 4-х цен
@@ -38,6 +38,7 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
             print(f'- Кол-во записей в файле: {len(file_bars)}')
         else:  # Файл не существует
             print(f'Файл {file_name} не найден и будет создан')
+        print(f'Получение истории {class_code}.{sec_code} {time_frame}{compression} из QUIK')
         new_bars = qp_provider.GetCandlesFromDataSource(class_code, sec_code, interval, 0)['data']  # Получаем все бары из QUIK
         pd_bars = pd.json_normalize(new_bars)  # Переводим список баров в pandas DataFrame
         pd_bars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
@@ -85,19 +86,13 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # datapath = '../../Data/'  # Путь к файлам (Linux)
     datapath = '..\\..\\Data\\'  # Путь к файлам (Windows)
 
-    # Получаем бары в первый раз / когда идет сессия
-    # save_candles_to_file(class_code, sec_codes,, skipLastDate=True, fourPriceDoji=True)  # Дневные бары
-    # save_candles_to_file(class_code, sec_codes,, 'M', 60, skipFirstDate=True, skipLastDate=True)  # часовые бары
-    # save_candles_to_file(class_code, sec_codes,, 'M', 15, skipFirstDate=True, skipLastDate=True)  # 15-и минутные бары
-    # save_candles_to_file(class_code, sec_codes, 'M', 5, skipFirstDate=True, skipLastDate=True)  # 5-и минутные бары
-    # save_candles_to_file(class_code, sec_codes,, 'M', 1, skipFirstDate=True, skipLastDate=True)  # минутные бары
-
-    # Получаем бары, когда сессия не идет
+    skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
+    # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
     save_candles_to_file(class_code, sec_codes, four_price_doji=True)  # Дневные бары
-    save_candles_to_file(class_code, sec_codes, 'M', 60, skip_first_date=True)  # часовые бары
-    save_candles_to_file(class_code, sec_codes, 'M', 15, skip_first_date=True)  # 15-и минутные бары
-    save_candles_to_file(class_code, sec_codes, 'M', 5, skip_first_date=True)  # 5-и минутные бары
-    save_candles_to_file(class_code, sec_codes, 'M', 1, skip_first_date=True)  # минутные бары
+    save_candles_to_file(class_code, sec_codes, 'M', 60, skip_last_date=skip_last_date)  # часовые бары
+    save_candles_to_file(class_code, sec_codes, 'M', 15, skip_last_date=skip_last_date)  # 15-и минутные бары
+    save_candles_to_file(class_code, sec_codes, 'M', 5, skip_last_date=skip_last_date)  # 5-и минутные бары
+    save_candles_to_file(class_code, sec_codes, 'M', 1, skip_last_date=skip_last_date, four_price_doji=True)  # минутные бары
 
-    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy
     print(f'Скрипт выполнен за {(time() - start_time):.2f} с')

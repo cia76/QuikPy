@@ -26,8 +26,8 @@ def get_all_accounts():
             class_info = qp_provider.GetClassInfo(class_code)['data']  # Информация о классе
             print(f'- Класс {class_code} ({class_info["name"]}), Тикеров {class_info["nsecs"]}')
             # Инструменты. Если выводить на экран, то занимают много места. Поэтому, закомментировали
-            # classSecurities = qpProvider.GetClassSecurities(classCode)['data'][:-1].split(',')  # Список инструментов класса. Удаляем последнюю запятую, разбиваем значения по запятой
-            # print(f'  - Тикеры ({classSecurities})')
+            # class_securities = qpProvider.GetClassSecurities(classCode)['data'][:-1].split(',')  # Список инструментов класса. Удаляем последнюю запятую, разбиваем значения по запятой
+            # print(f'  - Тикеры ({class_securities})')
         if firm_id == futures_firm_id:  # Для фьючерсов свои расчеты
             # Лимиты
             print(f'- Фьючерсный лимит {qp_provider.GetFuturesLimit(firm_id, trade_account_id, 0, "SUR")["data"]["cbplimit"]} SUR')
@@ -54,7 +54,7 @@ def get_all_accounts():
                     print(f'  - Позиция {class_code}.{sec_code} {firm_kind_depo_limit["currentbal"]} @ {entry_price:.2f}/{last_price:.2f}')
         # Заявки
         firm_orders = [order for order in orders if order['firmid'] == firm_id and order['flags'] & 0b1 == 0b1]  # Активные заявки по фирме
-        for firm_order in firm_orders:  # Пробегаемся по всем заявка
+        for firm_order in firm_orders:  # Пробегаемся по всем заявкам
             buy = firm_order['flags'] & 0b100 != 0b100  # Заявка на покупку
             print(f'- Заявка номер {firm_order["order_num"]} {"Покупка" if buy else "Продажа"} {firm_order["class_code"]}.{firm_order["sec_code"]} {firm_order["qty"]} @ {firm_order["price"]}')
         # Стоп заявки
@@ -124,7 +124,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print()
     get_account()  # Российские фьючерсы и опционы (счет по умолчанию)
     # По списку полученных счетов обязательно проверьте каждый!
-    # GetAccount('<Код клиента>', '<Код фирмы>', '<Счет>', <Номер дня лимита>, '<Валюта>', <Счет фьючерсов=True, иначе=False>)
+    # get_account('<Код клиента>', '<Код фирмы>', '<Счет>', <Номер дня лимита>, '<Валюта>', <Счет фьючерсов=True, иначе=False>)
 
     # Выход
-    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy

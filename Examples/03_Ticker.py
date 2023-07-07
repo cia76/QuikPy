@@ -26,4 +26,4 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print('Шаг цены:', si['min_price_step'])  # Минимальный шаг цены
 
     # Выход
-    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy
