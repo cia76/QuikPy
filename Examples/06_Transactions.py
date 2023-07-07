@@ -108,4 +108,4 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # print(f'Удаление стоп заявки отправлено на рынок: {qp_provider.SendTransaction(transaction)["data"]}')
 
     input('Enter - отмена\n')  # Ждем исполнение заявки
-    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy

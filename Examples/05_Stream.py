@@ -23,32 +23,32 @@ def changed_connection(data):
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     qp_provider = QuikPy()  # Подключение к локальному запущенному терминалу QUIK
 
-    # classCode = 'TQBR'  # Класс тикера
-    # secCode = 'SBER'  # Тикер
+    class_code = 'TQBR'  # Класс тикера
+    sec_code = 'SBER'  # Тикер
 
-    classCode = 'SPBFUT'  # Класс тикера
-    secCode = 'SiU3'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    # class_code = 'SPBFUT'  # Класс тикера
+    # sec_code = 'SiU3'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
 
     # Запрос текущего стакана. Чтобы получать, в QUIK открыть Таблицу Котировки, указать тикер
-    # print(f'Текущий стакан {classCode}.{secCode}:', qpProvider.GetQuoteLevel2(classCode, secCode)['data'])
+    # print(f'Текущий стакан {class_code}.{sec_code}:', qp_provider.GetQuoteLevel2(class_code, sec_code)['data'])
 
-    # Стакан. Чтобы отмена подписки работала корректно, в QUIK должна быть ЗАКРЫТА таблица Котировки тикера
-    # qpProvider.OnQuote = print_callback  # Обработчик изменения стакана котировок
-    # print(f'Подписка на изменения стакана {classCode}.{secCode}:', qpProvider.SubscribeLevel2Quotes(classCode, secCode)['data'])
-    # print('Статус подписки:', qpProvider.IsSubscribedLevel2Quotes(classCode, secCode)['data'])
-    # sleepSec = 3  # Кол-во секунд получения котировок
-    # print('Секунд котировок:', sleepSec)
-    # time.sleep(sleepSec)  # Ждем кол-во секунд получения котировок
-    # print(f'Отмена подписки на изменения стакана:', qpProvider.UnsubscribeLevel2Quotes(classCode, secCode)['data'])
-    # print('Статус подписки:', qpProvider.IsSubscribedLevel2Quotes(classCode, secCode)['data'])
-    # qpProvider.OnQuote = qpProvider.DefaultHandler  # Возвращаем обработчик по умолчанию
+    # Стакан. Чтобы отмена подписки работала корректно, в QUIK должна быть ЗАКРЫТА Таблица Котировки тикера
+    qp_provider.OnQuote = print_callback  # Обработчик изменения стакана котировок
+    print(f'Подписка на изменения стакана {class_code}.{sec_code}:', qp_provider.SubscribeLevel2Quotes(class_code, sec_code)['data'])
+    print('Статус подписки:', qp_provider.IsSubscribedLevel2Quotes(class_code, sec_code)['data'])
+    sleep_sec = 3  # Кол-во секунд получения котировок
+    print('Секунд котировок:', sleep_sec)
+    time.sleep(sleep_sec)  # Ждем кол-во секунд получения котировок
+    print(f'Отмена подписки на изменения стакана:', qp_provider.UnsubscribeLevel2Quotes(class_code, sec_code)['data'])
+    print('Статус подписки:', qp_provider.IsSubscribedLevel2Quotes(class_code, sec_code)['data'])
+    qp_provider.OnQuote = qp_provider.DefaultHandler  # Возвращаем обработчик по умолчанию
 
     # Обезличенные сделки. Чтобы получать, в QUIK открыть Таблицу обезличенных сделок, указать тикер
-    # qpProvider.OnAllTrade = print_callback  # Обработчик получения обезличенной сделки
-    # sleepSec = 1  # Кол-во секунд получения обезличенных сделок
-    # print('Секунд обезличенных сделок:', sleepSec)
-    # time.sleep(sleepSec)  # Ждем кол-во секунд получения обезличенных сделок
-    # qpProvider.OnAllTrade = qpProvider.DefaultHandler  # Возвращаем обработчик по умолчанию
+    # qp_provider.OnAllTrade = print_callback  # Обработчик получения обезличенной сделки
+    # sleep_sec = 1  # Кол-во секунд получения обезличенных сделок
+    # print('Секунд обезличенных сделок:', sleep_sec)
+    # time.sleep(sleep_sec)  # Ждем кол-во секунд получения обезличенных сделок
+    # qp_provider.OnAllTrade = qp_provider.DefaultHandler  # Возвращаем обработчик по умолчанию
 
     # Просмотр изменений состояния соединения терминала QUIK с сервером брокера
     qp_provider.OnConnected = changed_connection  # Нажимаем кнопку "Установить соединение" в QUIK
@@ -59,12 +59,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
     #  Перед повторной подпиской нужно перезапустить скрипт QuikSharp.lua Подписка станет первой, все заработает
     qp_provider.OnNewCandle = print_callback  # Обработчик получения новой свечки
     for interval in (60,):  # (1, 60, 1440) = Минутки, часовки, дневки
-        print(f'Подписка на интервал {interval}:', qp_provider.SubscribeToCandles(classCode, secCode, interval)['data'])
-        print(f'Статус подписки на интервал {interval}:', qp_provider.IsSubscribed(classCode, secCode, interval)['data'])
+        print(f'Подписка на интервал {interval}:', qp_provider.SubscribeToCandles(class_code, sec_code, interval)['data'])
+        print(f'Статус подписки на интервал {interval}:', qp_provider.IsSubscribed(class_code, sec_code, interval)['data'])
     input('Enter - отмена\n')
     for interval in (60,):  # (1, 60, 1440) = Минутки, часовки, дневки
-        print(f'Отмена подписки на интервал {interval}', qp_provider.UnsubscribeFromCandles(classCode, secCode, interval)['data'])
-        print(f'Статус подписки на интервал {interval}:', qp_provider.IsSubscribed(classCode, secCode, interval)['data'])
+        print(f'Отмена подписки на интервал {interval}', qp_provider.UnsubscribeFromCandles(class_code, sec_code, interval)['data'])
+        print(f'Статус подписки на интервал {interval}:', qp_provider.IsSubscribed(class_code, sec_code, interval)['data'])
 
     # Выход
-    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy из любого экземпляра
+    qp_provider.CloseConnectionAndThread()  # Перед выходом закрываем соединение и поток QuikPy
