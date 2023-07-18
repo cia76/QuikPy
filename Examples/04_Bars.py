@@ -62,6 +62,9 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
             len_with_doji = len(pd_bars)  # Кол-во баров до удаления дожи
             pd_bars.drop(pd_bars[(pd_bars.high == pd_bars.low)].index, inplace=True)  # Удаляем их по условию High == Low
             print('- Удалено дожи 4-х цен:', len_with_doji - len(pd_bars))
+        if len(pd_bars) == 0:  # Если нечего объединять
+            print('Новых записей нет')
+            continue  # то переходим к следующему тикеру, дальше не продолжаем
         print('- Первая запись в QUIK:', pd_bars.index[0])
         print('- Последняя запись в QUIK:', pd_bars.index[-1])
         print('- Кол-во записей в QUIK:', len(pd_bars))
