@@ -284,7 +284,7 @@ class QuikPy:
 
     def GetClientCodes(self, trans_id=0):
         """Все коды клиента"""
-        return self.process_request({'data': '', 'id': trans_id, 'cmd': 'getClientCode', 't': ''})
+        return self.process_request({'data': '', 'id': trans_id, 'cmd': 'getClientCodes', 't': ''})
 
     def GetAllDepoLimits(self, trans_id=0):
         """Лимиты по бумагам (всем)"""
