@@ -31,8 +31,9 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
         file_exists = os.path.isfile(file_name)  # Существует ли файл
         if file_exists:  # Если файл существует
             print(f'Получение файла {file_name}')
-            file_bars = pd.read_csv(file_name, sep='\t', index_col='datetime')  # Считываем файл в DataFrame
-            file_bars.index = pd.to_datetime(file_bars.index, format='%d.%m.%Y %H:%M')  # Переводим индекс в формат datetime
+            file_bars = pd.read_csv(file_name, sep='\t')  # Считываем файл в DataFrame
+            file_bars['datetime'] = pd.to_datetime(file_bars['datetime'], format='%d.%m.%Y %H:%M')  # Переводим дату/время в формат datetime
+            file_bars.index = file_bars['datetime']  # Она и будет индексом
             print(f'- Первая запись файла: {file_bars.index[0]}')
             print(f'- Последняя запись файла: {file_bars.index[-1]}')
             print(f'- Кол-во записей в файле: {len(file_bars)}')
@@ -44,9 +45,9 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
         pd_bars.rename(columns={'datetime.year': 'year', 'datetime.month': 'month', 'datetime.day': 'day',
                                 'datetime.hour': 'hour', 'datetime.min': 'minute', 'datetime.sec': 'second'},
                        inplace=True)  # Чтобы получить дату/время переименовываем колонки
-        pd_bars.index = pd.to_datetime(pd_bars[['year', 'month', 'day', 'hour', 'minute', 'second']])  # Собираем дату/время из колонок
-        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
-        pd_bars.index.name = 'datetime'  # Ставим название индекса даты/времени
+        pd_bars['datetime'] = pd.to_datetime(pd_bars[['year', 'month', 'day', 'hour', 'minute', 'second']])  # Собираем дату/время из колонок
+        pd_bars.index = pd_bars['datetime']  # Это будет индексом
+        pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата/время нужна, чтобы не удалять одинаковые OHLCV на разное время
         pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
         if not file_exists and skip_first_date:  # Если файла нет, и убираем бары на первую дату
             len_with_first_date = len(pd_bars)  # Кол-во баров до удаления на первую дату
@@ -70,6 +71,7 @@ def save_candles_to_file(class_code='TQBR', sec_codes=('SBER',), time_frame='D',
         print('- Кол-во записей в QUIK:', len(pd_bars))
         if file_exists:  # Если файл существует
             pd_bars = pd.concat([file_bars, pd_bars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из QUIK, убираем дубликаты, сортируем заново
+        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата/время будет экспортирована как индекс
         pd_bars.to_csv(file_name, sep='\t', date_format='%d.%m.%Y %H:%M')
         print(f'- В файл {file_name} сохранено записей: {len(pd_bars)}')
 
