@@ -476,6 +476,12 @@ function qsfunctions.calc_buy_sell(msg)
     return msg
 end
 
+-- функция для получения даты торговой сессии
+function qsfunctions.getTradeDate(msg)
+    msg.data = getTradeDate()
+    return msg
+end
+
 --- отправляет транзакцию на сервер и возвращает пустое сообщение, которое
 -- будет проигноировано. Вместо него, отправитель будет ждать события
 -- OnTransReply, из которого по TRANS_ID он получит результат отправленной транзакции
@@ -636,21 +642,16 @@ function qsfunctions.getFuturesClientLimits(msg)
     return msg
 end
 
---- (ichechet) Через getFuturesHolding позиции не приходили. Пришлось сделать обработку таблицы futures_client_holding
 function qsfunctions.getFuturesHolding(msg)
-	if msg.data ~= "" then
-		local spl = split(msg.data, "|")
-		local firmId, accId, secCode, posType = spl[1], spl[2], spl[3], spl[4]
+    local spl = split(msg.data, "|")
+    local firmId, accId, secCode, posType = spl[1], spl[2], spl[3], spl[4]
+	local result, err = getFuturesHolding(firmId, accId, secCode, posType*1)
+	if result then
+		msg.data = result
+	else
+		--log("Futures holding returns nil", 3)
+		msg.data = nil
 	end
-	
-	local fchs = {}
-	for i = 0, getNumberOf("futures_client_holding") - 1 do
-		local fch = getItem("futures_client_holding", i)
-		if msg.data == "" or (fch.firmid == firmId and fch.trdaccid == accId and fch.sec_code == secCode and fch.type == posType*1) then
-			table.insert(fchs, fch)
-		end
-	end
-	msg.data = fchs
     return msg
 end
 
@@ -808,6 +809,40 @@ function qsfunctions.get_all_trades(msg)
 	return msg
 end
 
+-- Функция предназначена для получения параметров таблицы «Купить/Продать».
+-- Функция возвращает таблицу Lua с параметрами из таблицы QUIK «Купить/Продать», означающими возможность купить либо продать указанный инструмент «sec_code» класса «class_code», 
+-- указанным клиентом «client_code» фирмы «firmid», по указанной цене «price». Если цена равна «0», то используются лучшие значения спроса/предложения.
+function qsfunctions.getBuySellInfo(msg)
+    local spl = split(msg.data, "|")
+    local firmId, clientCode, class_code, sec_code, price = spl[1], spl[2], spl[3], spl[4], spl[5]
+
+	local result, err = getBuySellInfoEx(firmId, clientCode, class_code, sec_code, tonumber(price))
+	if result.is_margin_sec then
+		msg.data = result
+	else
+		--log("getBuySellInfo returns nil", 3)
+		msg.data = nil
+	end
+    return msg
+end
+
+-- Функция предназначена для получения параметров таблицы «Купить/Продать».
+-- Функция возвращает таблицу Lua с параметрами из таблицы QUIK «Купить/Продать», означающими возможность купить либо продать указанный инструмент «sec_code» класса «class_code», 
+-- указанным клиентом «client_code» фирмы «firmid», по указанной цене «price». Если цена равна «0», то используются лучшие значения спроса/предложения.
+function qsfunctions.getBuySellInfoEx(msg)
+    local spl = split(msg.data, "|")
+    local firmId, clientCode, class_code, sec_code, price = spl[1], spl[2], spl[3], spl[4], spl[5]
+
+	local result, err = getBuySellInfoEx(firmId, clientCode, class_code, sec_code, tonumber(price))
+	if result.is_margin_sec then
+		msg.data = result
+	else
+		--log("getBuySellInfoEx returns nil", 3)
+		msg.data = nil
+	end
+    return msg
+end
+
 
 --------------------------
 -- OptionBoard functions --
@@ -889,7 +924,7 @@ end
 
 --- Возвращаем количество свечей по тегу
 function qsfunctions.get_num_candles(msg)
-	log("Called get_num_candles" .. msg.data, 2)
+	--log("Called get_num_candles" .. msg.data, 2)
 	local spl = split(msg.data, "|")
 	local tag = spl[1]
 
@@ -900,7 +935,7 @@ end
 
 --- Возвращаем все свечи по идентификатору графика. График должен быть открыт
 function qsfunctions.get_candles(msg)
-	log("Called get_candles" .. msg.data, 2)
+	--log("Called get_candles" .. msg.data, 2)
 	local spl = split(msg.data, "|")
 	local tag = spl[1]
 	local line = tonumber(spl[2])
@@ -909,10 +944,10 @@ function qsfunctions.get_candles(msg)
 	if count == 0 then
 		count = getNumCandles(tag) * 1
 	end
-	log("Count: " .. count, 2)
+	--log("Count: " .. count, 2)
 	local t,n,l = getCandlesByIndex(tag, line, first_candle, count)
-	log("Candles table size: " .. n, 2)
-	log("Label: " .. l, 2)
+	--log("Candles table size: " .. n, 2)
+	--log("Label: " .. l, 2)
 	local candles = {}
 	for i = 0, count - 1 do
 		table.insert(candles, t[i])
@@ -922,19 +957,14 @@ function qsfunctions.get_candles(msg)
 end
 
 --- Возвращаем все свечи по заданному инструменту и интервалу
--- (ichechet) Если исторические данные по тикеру не приходят, то QUIK блокируется. Чтобы это не происходило, вводим таймаут
 function qsfunctions.get_candles_from_data_source(msg)
 	local ds, is_error = create_data_source(msg)
 	if not is_error then
-		-- Источник данных изначально приходит пустым. Нужно подождать пока он заполнится данными. Бесконечно ждать тоже нельзя. Вводим таймаут
-		local s = 0 -- Будем ждать 5 секунд, прежде чем вернем таймаут
-		repeat -- Ждем
-			sleep(100) -- 100 миллисекунд
-			s = s + 100 -- Запоминаем кол-во прошедших миллисекунд
-		until (ds:Size() > 0 or s > 5000) -- До тех пор, пока не придут данные или пока не наступит таймаут
+		--- датасорс изначально приходит пустой, нужно некоторое время подождать пока он заполниться данными
+		repeat sleep(1) until ds:Size() > 0
 
-		local count = tonumber(split(msg.data, "|")[4]) -- возвращаем последние count свечей. Если равен 0, то возвращаем все доступные свечи.
-		local class, sec, interval = get_candles_param(msg)
+		local count = tonumber(split(msg.data, "|")[5]) --- возвращаем последние count свечей. Если равен 0, то возвращаем все доступные свечи.
+		local class, sec, interval, param = get_candles_param(msg)
 		local candles = {}
 		local start_i = count == 0 and 1 or math.max(1, ds:Size() - count + 1)
 		for i = start_i, ds:Size() do
@@ -951,8 +981,14 @@ function qsfunctions.get_candles_from_data_source(msg)
 end
 
 function create_data_source(msg)
-	local class, sec, interval = get_candles_param(msg)
-	local ds, error_descr = CreateDataSource(class, sec, interval)
+	local class, sec, interval, param = get_candles_param(msg)
+	local ds
+	local error_descr
+	if param == "-" then
+		ds, error_descr = CreateDataSource(class, sec, interval)
+	else
+		ds, error_descr = CreateDataSource(class, sec, interval, param)
+	end
 	local is_error = false
 	if(error_descr ~= nil) then
 		msg.cmd = "lua_create_data_source_error"
@@ -960,7 +996,7 @@ function create_data_source(msg)
 		is_error = true
 	elseif ds == nil then
 		msg.cmd = "lua_create_data_source_error"
-		msg.lua_error = "Can't create data source for " .. class .. ", " .. sec .. ", " .. tostring(interval)
+		msg.lua_error = "Can't create data source for " .. class .. ", " .. sec .. ", " .. tostring(interval) .. ", " .. param
 		is_error = true
 	end
 	return ds, is_error
@@ -985,20 +1021,20 @@ last_indexes = {}
 function qsfunctions.subscribe_to_candles(msg)
 	local ds, is_error = create_data_source(msg)
 	if not is_error then
-		local class, sec, interval = get_candles_param(msg)
-		local key = get_key(class, sec, interval)
+		local class, sec, interval, param = get_candles_param(msg)
+		local key = get_key(class, sec, interval, param)
 		data_sources[key] = ds
 		last_indexes[key] = ds:Size()
 		ds:SetUpdateCallback(
 			function(index)
-				data_source_callback(index, class, sec, interval)
+				data_source_callback(index, class, sec, interval, param)
 			end)
 	end
 	return msg
 end
 
-function data_source_callback(index, class, sec, interval)
-	local key = get_key(class, sec, interval)
+function data_source_callback(index, class, sec, interval, param)
+	local key = get_key(class, sec, interval, param)
 	if index ~= last_indexes[key] then
 		last_indexes[key] = index
 
@@ -1017,8 +1053,8 @@ end
 
 --- Отписать от получения свечей по заданному инструменту и интервалу
 function qsfunctions.unsubscribe_from_candles(msg)
-	local class, sec, interval = get_candles_param(msg)
-	local key = get_key(class, sec, interval)
+	local class, sec, interval, param = get_candles_param(msg)
+	local key = get_key(class, sec, interval, param)
 	data_sources[key]:Close()
 	data_sources[key] = nil
 	last_indexes[key] = nil
@@ -1027,8 +1063,8 @@ end
 
 --- Проверить открыта ли подписка на заданный инструмент и интервал
 function qsfunctions.is_subscribed(msg)
-	local class, sec, interval = get_candles_param(msg)
-	local key = get_key(class, sec, interval)
+	local class, sec, interval, param = get_candles_param(msg)
+	local key = get_key(class, sec, interval, param)
 	for k, v in pairs(data_sources) do
 		if key == k then
 			msg.data = true;
@@ -1042,12 +1078,12 @@ end
 --- Возвращает из msg информацию о инструменте на который подписываемся и интервале
 function get_candles_param(msg)
 	local spl = split(msg.data, "|")
-	return spl[1], spl[2], tonumber(spl[3])
+	return spl[1], spl[2], tonumber(spl[3]), spl[4]
 end
 
 --- Возвращает уникальный ключ для инструмента на который подписываемся и инетрвала
-function get_key(class, sec, interval)
-	return class .. "|" .. sec .. "|" .. tostring(interval)
+function get_key(class, sec, interval, param)
+	return class .. "|" .. sec .. "|" .. tostring(interval) .. "|" .. param
 end
 
 -------------------------

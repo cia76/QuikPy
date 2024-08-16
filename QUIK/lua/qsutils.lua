@@ -124,6 +124,7 @@ function log(msg, level)
     if logfile then
         pcall(logfile.write, logfile, os.date("%Y-%m-%d %H:%M:%S").."."..msecs.." "..logLine.."\n")
         pcall(logfile.flush, logfile)
+        pcall(logfile.close, logfile)
     end
 end
 
@@ -289,11 +290,19 @@ function sendResponse(msg_table)
     end
 end
 
+local counter = 0
+
 function sendCallback(msg_table)
     -- if not set explicitly then set CreatedTime "t" property here
     -- if not msg_table.t then msg_table.t = timemsec() end
     local callback_string = to_json(msg_table)
     if is_connected then
+        if math.fmod(counter, 1000) == 0 then
+            collectgarbage()
+            counter = 0
+        end
+        counter = counter + 1
+
         local status, res = pcall(callback_client.send, callback_client, callback_string..'\n')
         if status and res then
             return true
