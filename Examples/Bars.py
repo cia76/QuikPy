@@ -23,8 +23,7 @@ def load_candles_from_file(class_code, security_code, tf) -> pd.DataFrame:
     :param str tf: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
     """
     filename = f'{datapath}{class_code}.{security_code}_{tf}.txt'
-    file_exists = os.path.isfile(filename)  # Существует ли файл
-    if file_exists:  # Если файл существует
+    if os.path.isfile(filename):  # Если файл существует
         logger.info(f'Получение файла {filename}')
         file_bars = pd.read_csv(filename, sep=delimiter, parse_dates=['datetime'], date_format=dt_format)  # Получаем и разбираем бары из файла
         file_bars.index = file_bars['datetime']  # Дата/время также будет индексом
