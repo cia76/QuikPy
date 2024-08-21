@@ -32,6 +32,7 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
     buffer_size = 1048576  # Размер буфера приема в байтах (1 МБайт)
     tz_msk = timezone('Europe/Moscow')  # QUIK работает по московскому времени
     currency = 'SUR'  # Суммы будем получать в российских рублях
+    limit_kind = 'T1'  # Основной режим торгов
     futures_firm_id = 'SPBFUT'  # Код фирмы для срочного рынка. Если ваш брокер поставил другую фирму для срочного рынка, то измените ее
     logger = logging.getLogger('QuikPy')  # Будем вести лог
 
@@ -935,11 +936,13 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
                         sec_code = subscription['sec_code']  # Тикер
                         if subscription['subscription'] == 'quotes' and not self.is_subscribed_level2_quotes(class_code, sec_code)['data']:  # Если подписка на стакан и ее нет в QUIK
                             self.subscribe_level2_quotes(class_code, sec_code)  # то переподписываемся на стакан
+                            self.logger.debug(f'Повторная подписка на стакан: {class_code}.{sec_code}')
                         elif subscription['subscription'] == 'candles':  # Если подписка на свечки
                             interval = subscription['interval']  # Кол-во в минутах
                             param = subscription['param']  # Необязательный параметр
                             if not self.is_subscribed(class_code, sec_code, interval, param)['data']:  # и ее нет в QUIK'
                                 self.subscribe_to_candles(class_code, sec_code, interval, param)  # то подписываемся на свечки
+                                self.logger.debug(f'Повторная подписка на бары: {class_code}.{sec_code} {interval} {param}')
                     self.on_connected(data)
                 # on_clean_up - 22. Смена сервера QUIK / Пользователя / Сессии
                 elif data['cmd'] == 'OnClose':  # 23. Закрытие терминала QUIK
@@ -1048,7 +1051,7 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
             return f'M{tf}', True
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем , в т.ч. и с тиками (интервал = 0)
 
-    def price_to_quik_price(self, class_code, sec_code, price) -> float:
+    def price_to_quik_price(self, class_code, sec_code, price) -> Union[int, float]:
         """Перевод цены в цену QUIK
 
         :param str class_code: Код режима торгов
@@ -1063,10 +1066,11 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
         if class_code in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             quik_price = price * 100 / si['face_value']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif class_code == 'SPBFUT':  # Для рынка фьючерсов
-            quik_price = price * int(si['lot_size']) if int(si['lot_size']) > 0 else price  # Умножаем на размер лота
+            quik_price = price * int(si['lot_size']) if int(si['lot_size']) > 0 else price  # Умножаем на размер лота, если он есть
         else:  # В остальных случаях
             quik_price = price  # Цена не изменяется
-        return round(quik_price // min_step * min_step, si['scale'])  # Округляем цену кратно шага цены
+        quik_price = round(quik_price // min_step * min_step, si['scale'])  # Округляем цену кратно шага цены
+        return int(quik_price) if quik_price.is_integer() else quik_price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, приводим значение к целому числу
 
     def quik_price_to_price(self, class_code, sec_code, quik_price) -> float:
         """Перевод цены QUIK в цену

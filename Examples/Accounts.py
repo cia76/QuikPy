@@ -1,5 +1,6 @@
 import logging  # Выводим лог на консоль и в файл
 from datetime import datetime  # Дата и время
+from locale import currency
 
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QUIK#
 
@@ -43,9 +44,16 @@ if __name__ == '__main__':  # Точка входа при запуске это
             for active_futures_holding in active_futures_holdings:  # Пробегаемся по всем активным фьючерсным позициям
                 si = qp_provider.get_security_info('SPBFUT', active_futures_holding['sec_code'])['data']  # Информация о тикере
                 logger.info(f'- Позиция {si["class_code"]}.{si["sec_code"]} ({si["short_name"]}) {active_futures_holding["totalnet"]} @ {active_futures_holding["cbplused"]}')
-            futures_limit = qp_provider.get_futures_limit(firm_id, trade_account_id, 0, "SUR")["data"]
-            value = futures_limit["cbplused"]  # Стоимость позиций
-            cash = futures_limit["cbplimit"]  # Свободные средства
+            # Видео: https://www.youtube.com/watch?v=u2C7ElpXZ4k
+            # Баланс = Лимит откр.поз. + Вариац.маржа + Накоплен.доход
+            # Лимит откр.поз. = Сумма, которая была на счету вчера в 19:00 МСК (после вечернего клиринга)
+            # Вариац.маржа = Рассчитывается с 19:00 предыдущего дня без учета комисии. Перейдет в Накоплен.доход и обнулится в 14:00 (на дневном клиринге)
+            # Накоплен.доход включает Биржевые сборы
+            # Тек.чист.поз. = Заблокированное ГО под открытые позиции
+            # План.чист.поз. = На какую сумму можете открыть еще позиции
+            futures_limit = qp_provider.get_futures_limit(firm_id, trade_account_id, 0, qp_provider.currency)['data']  # Фьючерсные лимиты по денежным средствам (limit_type=0)
+            value = futures_limit['cbplused']  # Стоимость позиций
+            cash = futures_limit['cbplimit'] + futures_limit['varmargin'] + futures_limit['accruedint']  # Свободные средства = Лимит откр.поз. + Вариац.маржа + Накоплен.доход
             logger.info(f'- Позиции {value:.2f} + Свободные средства {cash:.2f} = {(value + cash):.2f} {futures_limit["currcode"]}')
         else:  # Для остальных фирм
             firm_money_limits = [moneyLimit for moneyLimit in money_limits if moneyLimit['firmid'] == firm_id]  # Денежные лимиты по фирме

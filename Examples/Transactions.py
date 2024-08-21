@@ -21,7 +21,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
     sec_code = 'SBER'  # Тикер
     quantity = 1  # Кол-во в лотах
 
-    stop_steps = 10  # Размер проскальзывания в шагах цены для стоп заявок
     client_code = account['client_code'] if account['client_code'] else ''  # Для фьючерсов кода клиента нет
     trade_account_id = account['trade_account_id']  # Счет
     last_price = float(qp_provider.get_param_ex(class_code, sec_code, 'LAST')['data']['param_value'])  # Последняя цена сделки
@@ -110,8 +109,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     # Новая стоп заявка
     stop_price = qp_provider.price_to_quik_price(class_code, sec_code, last_price * 1.01)  # Стоп цена на 1% выше последней цены сделки
-    if stop_price.is_integer():  # Целое значение мы должны отправлять без десятичных знаков
-        stop_price = int(stop_price)  # поэтому, приводим значение к целому числу
     transaction = {  # Все значения должны передаваться в виде строк
         'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
         'CLIENT_CODE': client_code,  # Код клиента
