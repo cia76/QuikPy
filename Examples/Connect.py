@@ -17,12 +17,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
                         handlers=[logging.FileHandler('Connect.log'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=qp_provider.tz_msk).timetuple()  # В логе время указываем по МСК
 
-    # Singleton
-    qp_provider1 = QuikPy()
-    logger.info(f'Экземпляры класса QuikPy с одинаковыми аргументами совпадают: {qp_provider == qp_provider1}')
-    qp_provider2 = QuikPy(requests_port=34132, callbacks_port=34133)
-    logger.info(f'Экземпляры класса QuikPy с разными аргументами совпадают: {qp_provider == qp_provider2}')
-
     # Проверяем соединение с терминалом QUIK
     is_connected = qp_provider.is_connected()['data']  # Состояние подключения терминала к серверу QUIK
     logger.info(f'Терминал QUIK подключен к серверу: {is_connected == 1}')
