@@ -42,7 +42,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
         if firm_id == futures_firm_id:  # Для фирмы фьючерсов
             active_futures_holdings = [futuresHolding for futuresHolding in qp_provider.get_futures_holdings()['data'] if futuresHolding['totalnet'] != 0]  # Активные фьючерсные позиции
             for active_futures_holding in active_futures_holdings:  # Пробегаемся по всем активным фьючерсным позициям
-                si = qp_provider.get_security_info('SPBFUT', active_futures_holding['sec_code'])['data']  # Информация о тикере
+                si = qp_provider.get_symbol_info('SPBFUT', active_futures_holding['sec_code'])  # Спецификация тикера
                 logger.info(f'- Позиция {si["class_code"]}.{si["sec_code"]} ({si["short_name"]}) {active_futures_holding["totalnet"]} @ {active_futures_holding["cbplused"]}')
             # Видео: https://www.youtube.com/watch?v=u2C7ElpXZ4k
             # Баланс = Лимит откр.поз. + Вариац.маржа + Накоплен.доход
@@ -68,7 +68,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                     class_code = qp_provider.get_security_class(class_codes, sec_code)['data']  # Код режима торгов из всех режимов по тикеру
                     entry_price = qp_provider.quik_price_to_price(class_code, sec_code, float(firm_kind_depo_limit["wa_position_price"]))  # Цена входа
                     last_price = qp_provider.quik_price_to_price(class_code, sec_code, float(qp_provider.get_param_ex(class_code, sec_code, 'LAST')['data']['param_value']))  # Последняя цена сделки
-                    si = qp_provider.get_security_info(class_code, sec_code)['data']  # Информация о тикере
+                    si = qp_provider.get_symbol_info(class_code, sec_code)  # Спецификация тикера
                     logger.info(f'- Позиция {class_code}.{sec_code} ({si["short_name"]}) {int(firm_kind_depo_limit["currentbal"])} @ {entry_price} / {last_price}')
                 logger.info(f'- T{limit_kind}: Свободные средства {firm_money_limit["currentbal"]} {firm_money_limit["currcode"]}')
         firm_orders = [order for order in orders if order['firmid'] == firm_id and order['flags'] & 0b1 == 0b1]  # Активные заявки по фирме
@@ -77,7 +77,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
             class_code = firm_order['class_code']  # Код режима торгов
             sec_code = firm_order["sec_code"]  # Тикер
             order_price = qp_provider.quik_price_to_price(class_code, sec_code, firm_order['price'])  # Цена заявки
-            si = qp_provider.get_security_info(class_code, sec_code)['data']  # Информация о тикере
+            si = qp_provider.get_symbol_info(class_code, sec_code)  # Спецификация тикера
             order_qty = firm_order['qty'] * si['lot_size']  # Кол-во в штуках
             logger.info(f'- Заявка номер {firm_order["order_num"]} {"Покупка" if buy else "Продажа"} {class_code}.{sec_code} {order_qty} @ {order_price}')
         firm_stop_orders = [stopOrder for stopOrder in stop_orders if stopOrder['firmid'] == firm_id and stopOrder['flags'] & 0b1 == 0b1]  # Активные стоп заявки по фирме
@@ -86,7 +86,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
             class_code = firm_stop_order['class_code']  # Код режима торгов
             sec_code = firm_stop_order['sec_code']  # Тикер
             stop_order_price = qp_provider.quik_price_to_price(class_code, sec_code, firm_stop_order['price'])  # Цена срабатывания стоп заявки
-            si = qp_provider.get_security_info(class_code, sec_code)['data']  # Информация о тикере
+            si = qp_provider.get_symbol_info(class_code, sec_code)  # Спецификация тикера
             stop_order_qty = firm_stop_order['qty'] * si['lot_size']  # Кол-во в штуках
             logger.info(f'- Стоп заявка номер {firm_stop_order["order_num"]} {"Покупка" if buy else "Продажа"} {class_code}.{sec_code} {stop_order_qty} @ {stop_order_price}')
 

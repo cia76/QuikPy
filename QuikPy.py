@@ -8,23 +8,7 @@ import logging  # Будем вести лог
 from pytz import timezone  # Работаем с временнОй зоной
 
 
-class Singleton(type):
-    """Метакласс для создания Singleton классов"""
-
-    def __init__(cls, *args, **kwargs):
-        """Инициализация класса"""
-        super(Singleton, cls).__init__(*args, **kwargs)  # то создаем зкземпляр класса
-        cls._singleton = None  # Экземпляра класса еще нет
-
-    def __call__(cls, *args, **kwargs):
-        """Вызов класса"""
-        if cls._singleton is None:  # Если класса нет в экземплярах класса
-            cls._singleton = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._singleton  # Возвращаем экземпляр класса
-
-
-# class QuikPy:  # Если требуется подключение ко многим терминалам QUIK через QuikPy, то используйте обычный класс
-class QuikPy(metaclass=Singleton):  # Если требуется одновременный доступ из разных скриптов к одному терминалу QUIK через QuikPy, то используйте Singleton класс
+class QuikPy:
     """Работа с QUIK из Python через LUA скрипты QUIK# https://github.com/finsight/QUIKSharp/tree/master/src/QuikSharp/lua
      На основе Документации по языку LUA в QUIK из https://arqatech.com/ru/support/files/
      Маркировка функций по пунктам документа: Документация по языку LUA в QUIK и примеры - Интерпретатор языка Lua - Версия 11.2
@@ -32,7 +16,7 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
     buffer_size = 1048576  # Размер буфера приема в байтах (1 МБайт)
     tz_msk = timezone('Europe/Moscow')  # QUIK работает по московскому времени
     currency = 'SUR'  # Суммы будем получать в российских рублях
-    limit_kind = 'T1'  # Основной режим торгов
+    limit_kind = 1  # Основной режим торгов T1
     futures_firm_id = 'SPBFUT'  # Код фирмы для срочного рынка. Если ваш брокер поставил другую фирму для срочного рынка, то измените ее
     logger = logging.getLogger('QuikPy')  # Будем вести лог
 
@@ -1010,7 +994,7 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
         if reload or (class_code, sec_code) not in self.symbols:  # Если нужно получить информацию из QUIK или нет информации о тикере в справочнике
             symbol_info = self.get_security_info(class_code, sec_code)  # Получаем информацию о тикере из QUIK
             if 'data' not in symbol_info:  # Если ответ не пришел (возникла ошибка). Например, для опциона
-                print(f'Информация о {self.class_sec_codes_to_dataname(class_code, sec_code)} не найдена')
+                self.logger.error(f'Информация о {self.class_sec_codes_to_dataname(class_code, sec_code)} не найдена')
                 return None  # то возвращаем пустое значение
             self.symbols[(class_code, sec_code)] = symbol_info['data']  # Заносим информацию о тикере в справочник
         return self.symbols[(class_code, sec_code)]  # Возвращаем значение из справочника
@@ -1059,18 +1043,18 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
         :param float price: Цена
         :return: Цена в QUIK
         """
-        si = self.get_security_info(class_code, sec_code)['data']  # Информация о тикере
+        si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
         if not si:  # Если тикер не найден
             return price  # то цена не изменяется
-        min_step = si['min_price_step']  # Шаг цены
         if class_code in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             quik_price = price * 100 / si['face_value']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif class_code == 'SPBFUT':  # Для рынка фьючерсов
             quik_price = price * int(si['lot_size']) if int(si['lot_size']) > 0 else price  # Умножаем на размер лота, если он есть
         else:  # В остальных случаях
             quik_price = price  # Цена не изменяется
+        min_step = si['min_price_step']  # Шаг цены
         quik_price = round(quik_price // min_step * min_step, si['scale'])  # Округляем цену кратно шага цены
-        return int(quik_price) if quik_price.is_integer() else quik_price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, приводим значение к целому числу
+        return int(quik_price) if quik_price.is_integer() else quik_price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, если возможно, приводим цену к целому числу
 
     def quik_price_to_price(self, class_code, sec_code, quik_price) -> float:
         """Перевод цены QUIK в цену
@@ -1080,7 +1064,7 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
         :param float quik_price: Цена в QUIK
         :return: Цена
         """
-        si = self.get_security_info(class_code, sec_code)['data']  # Информация о тикере
+        si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
         if not si:  # Если тикер не найден
             return quik_price  # то цена не изменяется
         min_step = si['min_price_step']  # Шаг цены
@@ -1091,4 +1075,35 @@ class QuikPy(metaclass=Singleton):  # Если требуется одновре
             price = quik_price / int(si['lot_size']) if int(si['lot_size']) > 0 else quik_price  # Делим на размер лота
         else:  # В остальных случаях
             price = quik_price  # Цена не изменяется
-        return round(price, si['scale'])  # Округляем цену до кол-ва десятичных знаков тикера
+        price = round(price, si['scale'])  # Округляем цену кратно шага цены
+        return int(price) if price.is_integer() else price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, если возможно, приводим цену к целому числу
+
+    def lots_to_size(self, class_code, sec_code, lots) -> int:
+        """Перевод лотов в штуки
+
+        :param str class_code: Код режима торгов
+        :param str sec_code: Тикер
+        :param int lots: Кол-во лотов
+        :return: Кол-во штук
+        """
+        si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
+        if si:  # Если тикер найден
+            lot_size = si['lot_size']  # Кол-во штук в лоте
+            if lot_size:  # Если задано кол-во штук в лоте
+                return int(lots * lot_size)  # то возвращаем кол-во в штуках
+        return lots  # В остальных случаях возвращаем кол-во в лотах
+
+    def size_to_lots(self, class_code, sec_code, size) -> int:
+        """Перевод штуки в лоты
+
+        :param str class_code: Код режима торгов
+        :param str sec_code: Тикер
+        :param int size: Кол-во штук
+        :return: Кол-во лотов
+        """
+        si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
+        if si:  # Если тикер найден
+            lot_size = int(si['lot_size'])  # Кол-во штук в лоте
+            if lot_size:  # Если задано кол-во штук
+                return size // lot_size  # то возвращаем кол-во в лотах
+        return size  # В остальных случаях возвращаем кол-во в штуках
