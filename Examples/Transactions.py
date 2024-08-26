@@ -24,7 +24,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     client_code = account['client_code'] if account['client_code'] else ''  # Для фьючерсов кода клиента нет
     trade_account_id = account['trade_account_id']  # Счет
     last_price = float(qp_provider.get_param_ex(class_code, sec_code, 'LAST')['data']['param_value'])  # Последняя цена сделки
-    market_price = qp_provider.price_to_quik_price(class_code, sec_code, last_price * 1.01) if account['futures'] else 0  # Цена исполнения по рынку. Для фьючерсных заявок цена больше последней при покупке и меньше последней при продаже. Для остальных заявок цена = 0
+    market_price = last_price * 1.01 if account['futures'] else 0  # Цена исполнения по рынку. Для фьючерсных заявок цена больше последней при покупке и меньше последней при продаже. Для остальных заявок цена = 0
     order_num = 0  # 19-и значный номер заявки на бирже / номер стоп заявки на сервере. Будет устанавливаться в обработчике события ответа на транзакцию пользователя
     trans_id = itertools.count(1)  # Номер транзакции задается пользователем. Он будет начинаться с 1 и каждый раз увеличиваться на 1
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # sleep(10)  # Ждем 10 секунд
 
     # Новая лимитная заявка
-    limit_price = qp_provider.price_to_quik_price(class_code, sec_code, last_price * 0.99)  # Лимитная цена на 1% ниже последней цены сделки
+    limit_price = last_price * 0.99  # Лимитная цена на 1% ниже последней цены сделки
     logger.info(f'Заявка {class_code}.{sec_code} на покупку минимального лота по лимитной цене {limit_price}')
     transaction = {  # Все значения должны передаваться в виде строк
         'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
@@ -108,7 +108,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     sleep(10)  # Ждем 10 секунд
 
     # Новая стоп заявка
-    stop_price = qp_provider.price_to_quik_price(class_code, sec_code, last_price * 1.01)  # Стоп цена на 1% выше последней цены сделки
+    stop_price = last_price * 1.01  # Стоп цена на 1% выше последней цены сделки
     transaction = {  # Все значения должны передаваться в виде строк
         'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
         'CLIENT_CODE': client_code,  # Код клиента
