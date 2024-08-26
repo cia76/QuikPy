@@ -19,7 +19,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.Formatter.converter = lambda *args: datetime.now(tz=qp_provider.tz_msk).timetuple()  # В логе время указываем по МСК
 
     class_codes = qp_provider.get_classes_list()['data']  # Режимы торгов через запятую
-    # class_codes_list = class_codes[:-1].split(',')  # Удаляем последнюю запятую, разбиваем значения по запятой в список режимов торгов
+    class_codes_list = class_codes[:-1].split(',')  # Удаляем последнюю запятую, разбиваем значения по запятой в список режимов торгов
     trade_accounts = qp_provider.get_trade_accounts()['data']  # Все торговые счета
     money_limits = qp_provider.get_money_limits()['data']  # Все денежные лимиты (остатки на счетах)
     depo_limits = qp_provider.get_all_depo_limits()['data']  # Все лимиты по бумагам (позиции по инструментам)
@@ -27,8 +27,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     stop_orders = qp_provider.get_all_stop_orders()['data']  # Все стоп заявки
 
     for trade_account in trade_accounts:  # Пробегаемся по всем счетам (Коды клиента/Фирма/Счет)
-        # trade_account_class_codes = trade_account['class_codes'][1:-1].split('|')  # Режимы торгов счета. Удаляем первую и последнюю вертикальную черту, разбиваем значения по вертикальной черте
-        # intersection_class_codes = list(set(trade_account_class_codes).intersection(class_codes_list))  # Режимы торгов, которые есть и в списке и в торговом счете
+        trade_account_class_codes = trade_account['class_codes'][1:-1].split('|')  # Режимы торгов счета. Удаляем первую и последнюю вертикальную черту, разбиваем значения по вертикальной черте
+        intersection_class_codes = list(set(trade_account_class_codes).intersection(class_codes_list))  # Режимы торгов, которые есть и в списке и в торговом счете
         # for class_code in intersection_class_codes:  # Пробегаемся по всем режимам торгов
         #     class_info = qp_provider.get_class_info(class_code)['data']  # Информация о режиме торгов
         #     logger.info(f'- Режим торгов {class_code} ({class_info["name"]}), Тикеров {class_info["nsecs"]}')
@@ -39,6 +39,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
         trade_account_id = trade_account['trdaccid']  # Счет
         client_code = next((moneyLimit['client_code'] for moneyLimit in money_limits if moneyLimit['firmid'] == firm_id), None)  # Код клиента
         logger.info(f'Учетная запись: Код клиента {client_code if client_code else "не задан"}, Фирма {firm_id}, Счет {trade_account_id} ({trade_account["description"]})')
+        logger.info(f'Режимы торгов: {intersection_class_codes}')
         if firm_id == futures_firm_id:  # Для фирмы фьючерсов
             active_futures_holdings = [futuresHolding for futuresHolding in qp_provider.get_futures_holdings()['data'] if futuresHolding['totalnet'] != 0]  # Активные фьючерсные позиции
             for active_futures_holding in active_futures_holdings:  # Пробегаемся по всем активным фьючерсным позициям
