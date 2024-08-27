@@ -35,11 +35,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
         last_price = float(qp_provider.get_param_ex(class_code, sec_code, 'LAST')['data']['param_value'])  # Последняя цена сделки
         logger.info(f'- Последняя цена сделки: {last_price}')
         step_price = float(qp_provider.get_param_ex(class_code, sec_code, 'STEPPRICE')['data']['param_value'])  # Стоимость шага цены
-        if step_price and lot_size > 1:  # Если есть стоимость шага цены и лот
-            logger.info(f'- Стоимость шага цены: {step_price}')
-            lot_price = last_price / min_price_step * step_price  # Цена за лот
-            logger.info(f'- Цена за лот: {last_price} / {min_price_step} * {step_price} = {lot_price}')
-            pcs_price = lot_price / lot_size  # Цена за штуку
-            logger.info(f'- Цена за штуку: {lot_price} / {lot_size} = {pcs_price}')
+        if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
+            logger.info(f'- Стоимость шага цены: {step_price} руб.')
+            lot_price = last_price // min_price_step * step_price  # Цена за лот в рублях
+            logger.info(f'- Цена за лот: {last_price} / {min_price_step} * {step_price} = {lot_price} руб.')
+            pcs_price = lot_price / lot_size  # Цена за штуку в рублях
+            logger.info(f'- Цена за штуку: {lot_price} / {lot_size} = {pcs_price} руб.')
+            logger.info(f'- Последняя цена сделки: {qp_provider.price_to_quik_price(class_code, sec_code, pcs_price)} из цены за штуку в рублях')
 
     qp_provider.close_connection_and_thread()  # Перед выходом закрываем соединение для запросов и поток обработки функций обратного вызова

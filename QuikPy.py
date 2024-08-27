@@ -1036,47 +1036,50 @@ class QuikPy:
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем , в т.ч. и с тиками (интервал = 0)
 
     def price_to_quik_price(self, class_code, sec_code, price) -> Union[int, float]:
-        """Перевод цены в цену QUIK
+        """Перевод цены за штуку в рублях в цену QUIK
 
         :param str class_code: Код режима торгов
         :param str sec_code: Тикер
-        :param float price: Цена
+        :param float price: Цена за штуку в рублях
         :return: Цена в QUIK
         """
         si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
         if not si:  # Если тикер не найден
             return price  # то цена не изменяется
+        min_price_step = si['min_price_step']  # Шаг цены
+        quik_price = price  # Изначально считаем, что цена не изменится
         if class_code in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             quik_price = price * 100 / si['face_value']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif class_code == 'SPBFUT':  # Для рынка фьючерсов
-            quik_price = price * int(si['lot_size']) if int(si['lot_size']) > 0 else price  # Умножаем на размер лота, если он есть
-        else:  # В остальных случаях
-            quik_price = price  # Цена не изменяется
-        min_step = si['min_price_step']  # Шаг цены
-        quik_price = round(quik_price // min_step * min_step, si['scale'])  # Округляем цену кратно шага цены
+            lot_size = si['lot_size']  # Лот
+            step_price = float(self.get_param_ex(class_code, sec_code, 'STEPPRICE')['data']['param_value'])  # Стоимость шага цены
+            if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
+                lot_price = price * lot_size  # Цена за лот в рублях
+                quik_price = lot_price * min_price_step / step_price  # Цена
+        quik_price = round(quik_price // min_price_step * min_price_step, si['scale'])  # Округляем цену кратно шага цены
         return int(quik_price) if quik_price.is_integer() else quik_price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, если возможно, приводим цену к целому числу
 
     def quik_price_to_price(self, class_code, sec_code, quik_price) -> float:
-        """Перевод цены QUIK в цену
+        """Перевод цены QUIK в цену за штуку в рублях
 
         :param str class_code: Код режима торгов
         :param str sec_code: Тикер
         :param float quik_price: Цена в QUIK
-        :return: Цена
+        :return: Цена за штуку в рублях
         """
         si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
         if not si:  # Если тикер не найден
             return quik_price  # то цена не изменяется
-        min_step = si['min_price_step']  # Шаг цены
-        quik_price = quik_price // min_step * min_step  # Цена кратная шагу цены
         if class_code in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
-            price = quik_price / 100 * si['face_value']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+            return quik_price / 100 * si['face_value']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif class_code == 'SPBFUT':  # Для рынка фьючерсов
-            price = quik_price / int(si['lot_size']) if int(si['lot_size']) > 0 else quik_price  # Делим на размер лота
-        else:  # В остальных случаях
-            price = quik_price  # Цена не изменяется
-        price = round(price, si['scale'])  # Округляем цену кратно шага цены
-        return int(price) if price.is_integer() else price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, если возможно, приводим цену к целому числу
+            lot_size = si['lot_size']  # Лот
+            step_price = float(self.get_param_ex(class_code, sec_code, 'STEPPRICE')['data']['param_value'])  # Стоимость шага цены
+            if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
+                min_price_step = si['min_price_step']  # Шаг цены
+                lot_price = quik_price // min_price_step * step_price  # Цена за лот
+                return lot_price / lot_size  # Цена за штуку
+        return quik_price  # В остальных случаях цена не изменяется
 
     def lots_to_size(self, class_code, sec_code, lots) -> int:
         """Перевод лотов в штуки
