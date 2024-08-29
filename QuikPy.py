@@ -72,7 +72,7 @@ class QuikPy:
         money_limits = self.get_money_limits()['data']  # Все денежные лимиты (остатки на счетах)
         for account in self.get_trade_accounts()['data']:  # Пробегаемся по всем торговым счетам
             firm_id = account['firmid']  # Фирма
-            client_code = next((moneyLimit['client_code'] for moneyLimit in money_limits if moneyLimit['firmid'] == firm_id), None)  # Код клиента
+            client_code = next((moneyLimit['client_code'] for moneyLimit in money_limits if moneyLimit['firmid'] == firm_id), '')  # Код клиента
             class_codes: list[str] = account['class_codes'][1:-1].split('|')  # Список режимов торгов счета. Убираем первую и последнюю вертикальную черту, разбиваем по вертикальной черте
             self.accounts.append(dict(  # Добавляем торговый счет
                 client_code=client_code, firm_id=firm_id, trade_account_id=account['trdaccid'],  # Код клиента / Фирма / Счет
@@ -1035,6 +1035,22 @@ class QuikPy:
             return f'M{tf}', True
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем , в т.ч. и с тиками (интервал = 0)
 
+    def price_to_valid_price(self, class_code, sec_code, quik_price) -> Union[int, float]:
+        """Перевод цены в цену, которую примет QUIK в заявке
+
+        :param str class_code: Код режима торгов
+        :param str sec_code: Тикер
+        :param float quik_price: Цена в QUIK
+        :return: Цена, которую примет QUIK в зявке
+        """
+        si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
+        min_price_step = si['min_price_step']  # Шаг цены
+        valid_price = quik_price // min_price_step * min_price_step  # Цена должна быть кратна шагу цены
+        scale = si['scale']  # Кол-во десятичных знаков
+        if scale > 0:  # Если задано кол-во десятичных знаков
+            return round(valid_price, scale)  # то округляем цену кратно шага цены, возвращаем ее
+        return int(valid_price)  # Если кол-во десятичных знаков = 0, то переводим цену в целое число
+
     def price_to_quik_price(self, class_code, sec_code, price) -> Union[int, float]:
         """Перевод цены за штуку в рублях в цену QUIK
 
@@ -1056,8 +1072,7 @@ class QuikPy:
             if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
                 lot_price = price * lot_size  # Цена за лот в рублях
                 quik_price = lot_price * min_price_step / step_price  # Цена
-        quik_price = round(quik_price // min_price_step * min_price_step, si['scale'])  # Округляем цену кратно шага цены
-        return int(quik_price) if quik_price.is_integer() else quik_price  # Целое значение мы должны отправлять без десятичных знаков. Поэтому, если возможно, приводим цену к целому числу
+        return self.price_to_valid_price(class_code, sec_code, quik_price)  # Возращаем цену, которую примет QUIK в заявке
 
     def quik_price_to_price(self, class_code, sec_code, quik_price) -> float:
         """Перевод цены QUIK в цену за штуку в рублях
