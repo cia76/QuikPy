@@ -65,10 +65,6 @@ def get_candles_from_provider(qp_provider, class_code, security_code, tf) -> pd.
     pd_bars['datetime'] = pd.to_datetime(pd_bars[['year', 'month', 'day', 'hour', 'minute', 'second']])  # Собираем дату/время из колонок
     pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время нужны, чтобы не удалять одинаковые OHLCV на разное время
     pd_bars.index = pd_bars['datetime']  # Дата/время также будет индексом
-    si = qp_provider.get_symbol_info(class_code, security_code)  # Спецификация тикера
-    lot_size = int(si['lot_size'])  # Размер лота
-    if lot_size:  # Если задан размер лота
-        pd_bars['volume'] *= lot_size  # то переводим лоты в штуки
     pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
     pd_bars.drop_duplicates(keep='last', inplace=True)  # Могут быть получены дубли, удаляем их
     logger.info(f'Первый бар    : {pd_bars.index[0]:{dt_format}}')
