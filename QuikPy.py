@@ -70,13 +70,15 @@ class QuikPy:
 
         self.accounts = list()  # Счета
         money_limits = self.get_money_limits()['data']  # Все денежные лимиты (остатки на счетах)
+        i = 0  # Начальный номер счета
         for account in self.get_trade_accounts()['data']:  # Пробегаемся по всем торговым счетам
             firm_id = account['firmid']  # Фирма
             client_code = next((moneyLimit['client_code'] for moneyLimit in money_limits if moneyLimit['firmid'] == firm_id), '')  # Код клиента
             class_codes: list[str] = account['class_codes'][1:-1].split('|')  # Список режимов торгов счета. Убираем первую и последнюю вертикальную черту, разбиваем по вертикальной черте
             self.accounts.append(dict(  # Добавляем торговый счет
-                client_code=client_code, firm_id=firm_id, trade_account_id=account['trdaccid'],  # Код клиента / Фирма / Счет
+                account_id=i, client_code=client_code, firm_id=firm_id, trade_account_id=account['trdaccid'],  # Номер счета / Код клиента / Фирма / Счет
                 class_codes=class_codes, futures=(firm_id == self.futures_firm_id)))  # Режимы торгов / Счет срочного рынка
+            i += 1  # Смещаем на следующий номер счета
         self.subscriptions = []  # Список подписок. Для возобновления всех подписок после повторного подключения к серверу QUIK
         self.symbols = {}  # Справочник тикеров
 
