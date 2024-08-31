@@ -15,7 +15,7 @@ class QuikPy:
      """
     buffer_size = 1048576  # Размер буфера приема в байтах (1 МБайт)
     tz_msk = timezone('Europe/Moscow')  # QUIK работает по московскому времени
-    currency = 'SUR'  # Суммы будем получать в российских рублях
+    currency = 'SUR'  # Суммы будем получать в рублях
     limit_kind = 1  # Основной режим торгов T1
     futures_firm_id = 'SPBFUT'  # Код фирмы для срочного рынка. Если ваш брокер поставил другую фирму для срочного рынка, то измените ее
     logger = logging.getLogger('QuikPy')  # Будем вести лог
@@ -1054,11 +1054,11 @@ class QuikPy:
         return int(valid_price)  # Если кол-во десятичных знаков = 0, то переводим цену в целое число
 
     def price_to_quik_price(self, class_code, sec_code, price) -> Union[int, float]:
-        """Перевод цены за штуку в рублях в цену QUIK
+        """Перевод цены в рублях за штуку в цену QUIK
 
         :param str class_code: Код режима торгов
         :param str sec_code: Тикер
-        :param float price: Цена за штуку в рублях
+        :param float price: Цена в рублях за штуку
         :return: Цена в QUIK
         """
         si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
@@ -1072,17 +1072,17 @@ class QuikPy:
             lot_size = si['lot_size']  # Лот
             step_price = float(self.get_param_ex(class_code, sec_code, 'STEPPRICE')['data']['param_value'])  # Стоимость шага цены
             if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
-                lot_price = price * lot_size  # Цена за лот в рублях
-                quik_price = lot_price * min_price_step / step_price  # Цена
+                lot_price = price * lot_size  # Цена в рублях за лот
+                quik_price = lot_price * min_price_step / step_price  # Цена в рублях за штуку
         return self.price_to_valid_price(class_code, sec_code, quik_price)  # Возращаем цену, которую примет QUIK в заявке
 
     def quik_price_to_price(self, class_code, sec_code, quik_price) -> float:
-        """Перевод цены QUIK в цену за штуку в рублях
+        """Перевод цены QUIK в цену в рублях за штуку
 
         :param str class_code: Код режима торгов
         :param str sec_code: Тикер
         :param float quik_price: Цена в QUIK
-        :return: Цена за штуку в рублях
+        :return: Цена в рублях за штуку
         """
         si = self.get_symbol_info(class_code, sec_code)  # Спецификация тикера
         if not si:  # Если тикер не найден
