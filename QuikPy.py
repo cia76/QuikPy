@@ -728,7 +728,7 @@ class QuikPy:
         :param str sec_code: Тикер
         :param int trans_id: Код транзакции
         """
-        result = self.process_request({'data': f'{class_code}|{sec_code}', 'id': trans_id, 'cmd': 'Subscribe_Level_2_Quotes', 't': ''})
+        result = self.process_request({'data': f'{class_code}|{sec_code}', 'id': trans_id, 'cmd': 'Subscribe_Level_II_Quotes', 't': ''})
         subscription = {'subscription': 'quotes', 'class_code': class_code, 'sec_code': sec_code}  # Подписка
         if self.is_subscribed_level2_quotes(class_code, sec_code)['data'] and subscription not in self.subscriptions:  # Если есть подписка на стакан, но ее нет в списке подписок
             self.subscriptions.append(subscription)  # то добавляем подписку
@@ -741,7 +741,7 @@ class QuikPy:
         :param str sec_code: Тикер
         :param int trans_id: Код транзакции
         """
-        result = self.process_request({'data': f'{class_code}|{sec_code}', 'id': trans_id, 'cmd': 'Unsubscribe_Level_2_Quotes', 't': ''})
+        result = self.process_request({'data': f'{class_code}|{sec_code}', 'id': trans_id, 'cmd': 'Unsubscribe_Level_II_Quotes', 't': ''})
         subscription = {'subscription': 'quotes', 'class_code': class_code, 'sec_code': sec_code}  # Подписка
         if not self.is_subscribed_level2_quotes(class_code, sec_code)['data'] and subscription in self.subscriptions:  # Если нет подписки на стакан, но она есть в списке подписок
             self.subscriptions.remove(subscription)  # то удаляем подписку
