@@ -25,8 +25,12 @@ def load_candles_from_file(class_code, security_code, tf) -> pd.DataFrame:
     filename = f'{datapath}{class_code}.{security_code}_{tf}.txt'
     if os.path.isfile(filename):  # Если файл существует
         logger.info(f'Получение файла {filename}')
-        file_bars = pd.read_csv(filename, sep=delimiter, parse_dates=['datetime'], date_format=dt_format)  # Получаем и разбираем бары из файла
-        file_bars.index = file_bars['datetime']  # Дата/время также будет индексом
+        file_bars = pd.read_csv(filename,  # Имя файла
+                                sep=delimiter,  # Разделитель значений
+                                usecols=['datetime', 'open', 'high', 'low', 'close', 'volume'],  # Для ускорения обработки задаем колонки, которые будут нужны для исследований
+                                parse_dates=['datetime'],  # Колонку datetime разбираем как дату/время
+                                dayfirst=True,  # В дате/времени сначала идет день, затем месяц и год
+                                index_col='datetime')  # Индексом будет колонка datetime  # Дневки тикера
         logger.info(f'Первый бар    : {file_bars.index[0]:{dt_format}}')
         logger.info(f'Последний бар : {file_bars.index[-1]:{dt_format}}')
         logger.info(f'Кол-во бар    : {len(file_bars)}')
