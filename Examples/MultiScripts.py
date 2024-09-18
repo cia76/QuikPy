@@ -6,14 +6,20 @@ from QuikPy import QuikPy  # Работа с QUIK из Python через LUA с�
 
 
 def script1(provider: QuikPy):  # 1-ый скрипт
-    is_connected = provider.is_connected()['data']  # Состояние подключения терминала к серверу QUIK
-    logger.info(f'script1: Терминал QUIK подключен к серверу: {is_connected == 1}')
-    logger.info(f'script1: Отклик QUIK на команду Ping: {provider.ping()["data"]}')  # Проверка работы скрипта QuikSharp. Должен вернуть Pong
+    trans_id = 1  # Номера транзакций для 1-го скрипта
+    for i in range(100):  # Даем нагрузку на QuikPy
+        is_connected = provider.is_connected(trans_id)  # Состояние подключения терминала к серверу QUIK
+        logger.info(f'script{is_connected["id"]}/{i}: Терминал QUIK подключен к серверу: {is_connected["data"] == 1}')
+        ping = provider.ping(trans_id)  # Проверка работы скрипта QuikSharp. Должен вернуть Pong
+        logger.info(f'script{ping["id"]}/{i}: Отклик QUIK на команду Ping: {ping["data"]}')
 
 
 def script2(provider: QuikPy):  # 2-ой скрипт
-    msg = 'Hello from Python!'
-    logger.info(f'script2: Отправка сообщения в QUIK: {msg}{provider.message_info(msg)["data"]}')  # Проверка работы QUIK. Сообщение в QUIK должно показаться как информационное
+    trans_id = 2  # Номера транзакций для 2-го скрипта
+    for i in range(100):  # Даем нагрузку на QuikPy
+        msg = 'Hello from Python!'
+        message_info = provider.message_info(msg, trans_id)  # Проверка работы QUIK. Сообщение в QUIK должно показаться как информационное
+        logger.info(f'script{message_info["id"]}/{i}: Отправка сообщения в QUIK: {msg}{message_info["data"]}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
