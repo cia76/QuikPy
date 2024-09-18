@@ -1,6 +1,6 @@
 from typing import Union  # Объединение типов
 from socket import socket, AF_INET, SOCK_STREAM  # Обращаться к LUA скриптам QUIK# будем через соединения
-from threading import Thread, Event  # Результат работы функций обратного вызова будем получать в отдельном потоке
+from threading import Thread, Event, Lock  # Поток/событие выхода для обратного вызова. Блокировка process_request для многопоточных приложений
 from json import loads  # Принимать данные в QUIK будем через JSON
 from json.decoder import JSONDecodeError  # Ошибка декодирования JSON
 import logging  # Будем вести лог
@@ -67,6 +67,7 @@ class QuikPy:
 
         self.callback_exit_event = Event()  # Определяем событие выхода из потока
         self.callback_thread = Thread(target=self.callback_handler, name='CallbackThread').start()  # Создаем и запускаем поток обработки функций обратного вызова
+        self.lock = Lock()  # Блокировка process_request для многопоточных приложений
 
         self.accounts = list()  # Счета
         money_limits = self.get_money_limits()['data']  # Все денежные лимиты (остатки на счетах)
@@ -830,6 +831,7 @@ class QuikPy:
         :param dict request: Запрос в виде словаря
         :returns: Ответ JSON
         """
+        self.lock.acquire()  # Ставим блокировку. Если во время выполнения process_request к нему будет обращение из другого потока, то будем здесь ожидать, пока блокировка не будет снята
         raw_data = f'{request}\r\n'.replace("'", '"').encode('cp1251')  # Переводим: словарь -> строка, одинарные кавычки -> двойные, кодировка UTF8 -> Windows 1251
         self.socket_requests.sendall(raw_data)  # Отправляем запрос в QUIK
         fragments = []  # Гораздо быстрее получать ответ в виде списка фрагментов
@@ -841,6 +843,7 @@ class QuikPy:
                 try:  # Бывает ситуация, когда данных приходит меньше, но это еще не конец данных
                     result = loads(data)  # Пробуем перевести ответ в формат JSON в кодировке Windows 1251
                     # self.logger.debug(f'process_request: Запрос: {raw_data} Ответ: {result}')  # Для отладки
+                    self.lock.release()  # Снимаем блокировку с process_request
                     return result
                 except JSONDecodeError:  # Если это еще не конец данных
                     pass  # то ждем фрагментов в буфере дальше
