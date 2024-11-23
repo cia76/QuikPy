@@ -31,6 +31,7 @@ def load_candles_from_file(class_code, security_code, tf) -> pd.DataFrame:
                                 parse_dates=['datetime'],  # Колонку datetime разбираем как дату/время
                                 dayfirst=True,  # В дате/времени сначала идет день, затем месяц и год
                                 index_col='datetime')  # Индексом будет колонка datetime  # Дневки тикера
+        file_bars['datetime'] = file_bars.index  # Колонка datetime нужна, чтобы не удалять одинаковые OHLCV на разное время
         logger.info(f'Первый бар    : {file_bars.index[0]:{dt_format}}')
         logger.info(f'Последний бар : {file_bars.index[-1]:{dt_format}}')
         logger.info(f'Кол-во бар    : {len(file_bars)}')
@@ -142,8 +143,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     #                   'VKCO', 'MOEX', 'SMLT', 'ALRS', 'CHMF', 'RNFT', 'BSPB', 'MAGN', 'FLOT', 'POSI',
     #                   'RUAL', 'PHOR', 'IRAO', 'PIKK', 'AQUA', 'RTKM', 'UPRO', 'TATNP', 'FEES', 'SELG')  # TOP 40 акций ММВБ
     # class_code = 'SPBFUT'  # Фьючерсы
-    # security_codes = ('SiU4', 'RIU4')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    # security_codes = ('USDRUBF', 'EURRUBF', 'CNYRUBF', 'GLDRUBF', 'IMOEXF')  # Вечные фьючерсы ММВБ
+    # security_codes = ('SiZ4', 'RIZ4')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    # security_codes = ('USDRUBF', 'EURRUBF', 'CNYRUBF', 'GLDRUBF', 'IMOEXF', 'SBERF', 'GAZPF')  # Вечные фьючерсы ММВБ
 
     skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
     # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
