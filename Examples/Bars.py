@@ -115,8 +115,10 @@ def save_candles_to_file(qp_provider, class_code, security_codes, tf='D1',
             logger.info('Новых бар нет')
             continue  # то переходим к следующему тикеру, дальше не продолжаем
         if not file_bars.empty:  # Если файл существует
-            pd_bars = pd.concat([file_bars, pd_bars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из QUIK, убираем дубликаты, сортируем заново
-        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время будет экспортирована как индекс
+            pd_bars = pd.concat([file_bars, pd_bars])  # Объединяем файл с данными из QUIK
+            pd_bars = pd_bars[~pd_bars.index.duplicated(keep='last')]  # Убираем дубликаты самым быстрым методом
+            pd_bars.sort_index(inplace=True)  # Сортируем по индексу заново
+        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время будут экспортированы как индекс
         filename = f'{datapath}{class_code}.{security_code}_{tf}.txt'
         logger.info('Сохранение файла')
         pd_bars.to_csv(filename, sep=delimiter, date_format=dt_format)
