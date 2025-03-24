@@ -100,17 +100,17 @@ def save_candles_to_file(qp_provider, class_code, security_codes, tf='D1',
         if file_bars.empty and skip_first_date:  # Если файла нет, и убираем бары на первую дату
             len_with_first_date = len(pd_bars)  # Кол-во баров до удаления на первую дату
             first_date = pd_bars.index[0].date()  # Первая дата
-            pd_bars.drop(pd_bars[(pd_bars.index.date == first_date)].index, inplace=True)  # Удаляем их
+            pd_bars.drop(pd_bars[pd_bars.index.date == first_date].index, inplace=True)  # Удаляем их
             logger.warning(f'Удалено баров на первую дату {first_date:{dt_format}}: {len_with_first_date - len(pd_bars)}')
         if skip_last_date:  # Если убираем бары на последнюю дату
             len_with_last_date = len(pd_bars)  # Кол-во баров до удаления на последнюю дату
             last_date = pd_bars.index[-1].date()  # Последняя дата
-            pd_bars.drop(pd_bars[(pd_bars.index.date == last_date)].index, inplace=True)  # Удаляем их
+            pd_bars.drop(pd_bars[pd_bars.index.date == last_date].index, inplace=True)  # Удаляем их
             logger.warning(f'Удалено баров на последнюю дату {last_date:{dt_format}}: {len_with_last_date - len(pd_bars)}')
         if not four_price_doji:  # Если удаляем дожи 4-х цен
             len_with_doji = len(pd_bars)  # Кол-во баров до удаления дожи
-            pd_bars.drop(pd_bars[(pd_bars.high == pd_bars.low)].index, inplace=True)  # Удаляем их по условию High == Low
-            logger.warning('Удалено дожи 4-х цен:', len_with_doji - len(pd_bars))
+            pd_bars.drop(pd_bars[pd_bars.high == pd_bars.low].index, inplace=True)  # Удаляем их по условию High == Low
+            logger.warning(f'Удалено дожи 4-х цен: {len_with_doji - len(pd_bars)}')
         if len(pd_bars) == 0:  # Если нечего объединять
             logger.info('Новых бар нет')
             continue  # то переходим к следующему тикеру, дальше не продолжаем
