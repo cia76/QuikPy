@@ -26,6 +26,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     orders = qp_provider.get_all_orders()['data']  # Все заявки
     stop_orders = qp_provider.get_all_stop_orders()['data']  # Все стоп заявки
 
+    i = 0  # Номер учетной записи
     for trade_account in trade_accounts:  # Пробегаемся по всем счетам (Коды клиента/Фирма/Счет)
         trade_account_class_codes = trade_account['class_codes'][1:-1].split('|')  # Режимы торгов счета. Удаляем первую и последнюю вертикальную черту, разбиваем значения по вертикальной черте
         intersection_class_codes = list(set(trade_account_class_codes).intersection(class_codes_list))  # Режимы торгов, которые есть и в списке и в торговом счете
@@ -38,7 +39,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
         firm_id = trade_account['firmid']  # Фирма
         trade_account_id = trade_account['trdaccid']  # Счет
         client_code = next((moneyLimit['client_code'] for moneyLimit in money_limits if moneyLimit['firmid'] == firm_id), None)  # Код клиента
-        logger.info(f'Учетная запись: Код клиента {client_code if client_code else "не задан"}, Фирма {firm_id}, Счет {trade_account_id} ({trade_account["description"]})')
+        logger.info(f'Учетная запись #{i}, Код клиента {client_code if client_code else "не задан"}, Фирма {firm_id}, Счет {trade_account_id} ({trade_account["description"]})')
         logger.info(f'Режимы торгов: {intersection_class_codes}')
         if firm_id == futures_firm_id:  # Для фирмы фьючерсов
             active_futures_holdings = [futuresHolding for futuresHolding in qp_provider.get_futures_holdings()['data'] if futuresHolding['totalnet'] != 0]  # Активные фьючерсные позиции
@@ -90,5 +91,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
             si = qp_provider.get_symbol_info(class_code, sec_code)  # Спецификация тикера
             stop_order_qty = firm_stop_order['qty'] * si['lot_size']  # Кол-во в штуках
             logger.info(f'- Стоп заявка номер {firm_stop_order["order_num"]} {"Покупка" if buy else "Продажа"} {class_code}.{sec_code} {stop_order_qty} @ {stop_order_price}')
+        i += 1  # Переходим к следующей учетной записи
 
     qp_provider.close_connection_and_thread()  # Перед выходом закрываем соединение для запросов и поток обработки функций обратного вызова
