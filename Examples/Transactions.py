@@ -27,7 +27,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     if not account:  # Если счет не найден
         logger.error(f'Торговый счет для режима торгов {class_code} не найден')
         exit()  # то выходим, дальше не продолжаем
-    client_code = account['client_code'] if account['client_code'] else ''  # Для фьючерсов кода клиента нет
+    client_code = account['client_code']  # Код клиента. Для фьючерсов кода клиента нет
     trade_account_id = account['trade_account_id']  # Счет
     last_price = float(qp_provider.get_param_ex(class_code, sec_code, 'LAST')['data']['param_value'])  # Последняя цена сделки
     si = qp_provider.get_symbol_info(class_code, sec_code)  # Спецификация тикера
@@ -51,40 +51,40 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # qp_provider.on_depo_limit_delete = lambda data: logger.info(f'OnDepoLimitDelete: {data}')  # Удаление позиции по инструментам
 
     # Новая рыночная заявка (открытие позиции)
-    market_price = qp_provider.price_to_quik_price(class_code, sec_code, qp_provider.quik_price_to_price(class_code, sec_code, last_price * 1.01)) if account['futures'] else 0  # Цена исполнения по рынку. Для фьючерсных заявок цена больше последней при покупке и меньше последней при продаже. Для остальных заявок цена = 0
-    logger.info(f'Заявка {class_code}.{sec_code} на покупку минимального лота по рыночной цене')
-    transaction = {  # Все значения должны передаваться в виде строк
-        'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
-        'CLIENT_CODE': client_code,  # Код клиента
-        'ACCOUNT': trade_account_id,  # Счет
-        'ACTION': 'NEW_ORDER',  # Тип заявки: Новая лимитная/рыночная заявка
-        'CLASSCODE': class_code,  # Код режима торгов
-        'SECCODE': sec_code,  # Код тикера
-        'OPERATION': 'B',  # B = покупка, S = продажа
-        'PRICE': str(market_price),  # Цена исполнения по рынку,  # Цена исполнения по рынку
-        'QUANTITY': str(quantity),  # Кол-во в лотах
-        'TYPE': 'M'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
-    logger.info(f'Заявка отправлена на рынок: {qp_provider.send_transaction(transaction)["data"]}')
-
-    sleep(10)  # Ждем 10 секунд
+    # market_price = qp_provider.price_to_quik_price(class_code, sec_code, qp_provider.quik_price_to_price(class_code, sec_code, last_price * 1.01)) if account['futures'] else 0  # Цена исполнения по рынку. Для фьючерсных заявок цена больше последней при покупке и меньше последней при продаже. Для остальных заявок цена = 0
+    # logger.info(f'Заявка {class_code}.{sec_code} на покупку минимального лота по рыночной цене')
+    # transaction = {  # Все значения должны передаваться в виде строк
+    #     'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
+    #     'CLIENT_CODE': client_code,  # Код клиента
+    #     'ACCOUNT': trade_account_id,  # Счет
+    #     'ACTION': 'NEW_ORDER',  # Тип заявки: Новая лимитная/рыночная заявка
+    #     'CLASSCODE': class_code,  # Код режима торгов
+    #     'SECCODE': sec_code,  # Код тикера
+    #     'OPERATION': 'B',  # B = покупка, S = продажа
+    #     'PRICE': str(market_price),  # Цена исполнения по рынку
+    #     'QUANTITY': str(quantity),  # Кол-во в лотах
+    #     'TYPE': 'M'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
+    # logger.info(f'Заявка отправлена на рынок: {qp_provider.send_transaction(transaction)["data"]}')
+    #
+    # sleep(10)  # Ждем 10 секунд
 
     # Новая рыночная заявка (закрытие позиции)
-    market_price = qp_provider.price_to_quik_price(class_code, sec_code, qp_provider.quik_price_to_price(class_code, sec_code, last_price * 0.99)) if account['futures'] else 0  # Цена исполнения по рынку. Для фьючерсных заявок цена больше последней при покупке и меньше последней при продаже. Для остальных заявок цена = 0
-    logger.info(f'Заявка {class_code}.{sec_code} на продажу минимального лота по рыночной цене')
-    transaction = {  # Все значения должны передаваться в виде строк
-        'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
-        'CLIENT_CODE': client_code,  # Код клиента
-        'ACCOUNT': trade_account_id,  # Счет
-        'ACTION': 'NEW_ORDER',  # Тип заявки: Новая лимитная/рыночная заявка
-        'CLASSCODE': class_code,  # Код режима торгов
-        'SECCODE': sec_code,  # Код тикера
-        'OPERATION': 'S',  # B = покупка, S = продажа
-        'PRICE': str(market_price),  # Цена исполнения по рынку
-        'QUANTITY': str(quantity),  # Кол-во в лотах
-        'TYPE': 'M'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
-    logger.info(f'Заявка отправлена на рынок: {qp_provider.send_transaction(transaction)["data"]}')
-
-    sleep(10)  # Ждем 10 секунд
+    # market_price = qp_provider.price_to_quik_price(class_code, sec_code, qp_provider.quik_price_to_price(class_code, sec_code, last_price * 0.99)) if account['futures'] else 0  # Цена исполнения по рынку. Для фьючерсных заявок цена больше последней при покупке и меньше последней при продаже. Для остальных заявок цена = 0
+    # logger.info(f'Заявка {class_code}.{sec_code} на продажу минимального лота по рыночной цене')
+    # transaction = {  # Все значения должны передаваться в виде строк
+    #     'TRANS_ID': str(next(trans_id)),  # Следующий номер транзакции
+    #     'CLIENT_CODE': client_code,  # Код клиента
+    #     'ACCOUNT': trade_account_id,  # Счет
+    #     'ACTION': 'NEW_ORDER',  # Тип заявки: Новая лимитная/рыночная заявка
+    #     'CLASSCODE': class_code,  # Код режима торгов
+    #     'SECCODE': sec_code,  # Код тикера
+    #     'OPERATION': 'S',  # B = покупка, S = продажа
+    #     'PRICE': str(market_price),  # Цена исполнения по рынку
+    #     'QUANTITY': str(quantity),  # Кол-во в лотах
+    #     'TYPE': 'M'}  # L = лимитная заявка (по умолчанию), M = рыночная заявка
+    # logger.info(f'Заявка отправлена на рынок: {qp_provider.send_transaction(transaction)["data"]}')
+    #
+    # sleep(10)  # Ждем 10 секунд
 
     # Новая лимитная заявка
     limit_price = qp_provider.price_to_quik_price(class_code, sec_code, qp_provider.quik_price_to_price(class_code, sec_code, last_price * 0.99))  # Лимитная цена на 1% ниже последней цены сделки
