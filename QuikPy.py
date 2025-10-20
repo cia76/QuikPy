@@ -1,4 +1,3 @@
-from typing import Union  # Объединение типов
 from socket import socket, AF_INET, SOCK_STREAM  # Обращаться к LUA скриптам QUIK# будем через соединения
 from threading import Thread, Event, Lock  # Поток/событие выхода для обратного вызова. Блокировка process_request для многопоточных приложений
 from json import loads  # Принимать данные в QUIK будем через JSON
@@ -962,7 +961,7 @@ class QuikPy:
 
     # Функции конвертации
 
-    def dataname_to_class_sec_codes(self, dataname) -> Union[tuple[str, str], None]:
+    def dataname_to_class_sec_codes(self, dataname) -> tuple[str, str] | None:
         """Код режима торгов и тикер из названия тикера
 
         :param str dataname: Название тикера
@@ -1040,7 +1039,7 @@ class QuikPy:
             return f'M{tf}', True
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем , в т.ч. и с тиками (интервал = 0)
 
-    def price_to_valid_price(self, class_code, sec_code, quik_price) -> Union[int, float]:
+    def price_to_valid_price(self, class_code, sec_code, quik_price) -> int | float:
         """Перевод цены в цену, которую примет QUIK в заявке
 
         :param str class_code: Код режима торгов
@@ -1056,7 +1055,7 @@ class QuikPy:
             return round(valid_price, scale)  # то округляем цену кратно шага цены, возвращаем ее
         return int(valid_price)  # Если кол-во десятичных знаков = 0, то переводим цену в целое число
 
-    def price_to_quik_price(self, class_code, sec_code, price) -> Union[int, float]:
+    def price_to_quik_price(self, class_code, sec_code, price) -> int | float:
         """Перевод цены в рублях за штуку в цену QUIK
 
         :param str class_code: Код режима торгов
