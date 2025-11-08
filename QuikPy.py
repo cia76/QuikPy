@@ -1,5 +1,5 @@
 from socket import socket, AF_INET, SOCK_STREAM  # Обращаться к LUA скриптам QUIK# будем через соединения
-from threading import Thread, Event, Lock  # Поток/событие выхода для обратного вызова. Блокировка process_request для многопоточных приложений
+from threading import Thread, Event as ThreadingEvent, Lock  # Поток/событие выхода для обратного вызова. Блокировка process_request для многопоточных приложений
 from json import loads  # Принимать данные в QUIK будем через JSON
 from json.decoder import JSONDecodeError  # Ошибка декодирования JSON
 import logging  # Будем вести лог
@@ -27,36 +27,36 @@ class QuikPy:
         :param int callbacks_port: Порт для функций обратного вызова
         """
         # 2.2 Функции обратного вызова
-        self.on_firm = self.default_handler  # 2.2.1 Новая фирма
-        self.on_all_trade = self.default_handler  # 2.2.2 Новая обезличенная сделка
-        self.on_trade = self.default_handler  # 2.2.3 Новая сделка / Изменение существующей сделки
-        self.on_order = self.default_handler  # 2.2.4 Новая заявка / Изменение существующей заявки
-        self.on_account_balance = self.default_handler  # 2.2.5 Изменение текущей позиции по счету
-        self.on_futures_limit_change = self.default_handler  # 2.2.6 Изменение ограничений по срочному рынку
-        self.on_futures_limit_delete = self.default_handler  # 2.2.7 Удаление ограничений по срочному рынку
-        self.on_futures_client_holding = self.default_handler  # 2.2.8 Изменение позиции по срочному рынку
-        self.on_money_limit = self.default_handler  # 2.2.9 Изменение денежной позиции
-        self.on_money_limit_delete = self.default_handler  # 2.2.10 Удаление денежной позиции
-        self.on_depo_limit = self.default_handler  # 2.2.11 Изменение позиций по инструментам
-        self.on_depo_limit_delete = self.default_handler  # 2.2.12 Удаление позиции по инструментам
-        self.on_account_position = self.default_handler  # 2.2.13 Изменение денежных средств
+        self.on_firm = Event()  # 2.2.1 Новая фирма
+        self.on_all_trade = Event()  # 2.2.2 Новая обезличенная сделка
+        self.on_trade = Event()  # 2.2.3 Новая сделка / Изменение существующей сделки
+        self.on_order = Event()  # 2.2.4 Новая заявка / Изменение существующей заявки
+        self.on_account_balance = Event()  # 2.2.5 Изменение текущей позиции по счету
+        self.on_futures_limit_change = Event()  # 2.2.6 Изменение ограничений по срочному рынку
+        self.on_futures_limit_delete = Event()  # 2.2.7 Удаление ограничений по срочному рынку
+        self.on_futures_client_holding = Event()  # 2.2.8 Изменение позиции по срочному рынку
+        self.on_money_limit = Event()  # 2.2.9 Изменение денежной позиции
+        self.on_money_limit_delete = Event()  # 2.2.10 Удаление денежной позиции
+        self.on_depo_limit = Event()  # 2.2.11 Изменение позиций по инструментам
+        self.on_depo_limit_delete = Event()  # 2.2.12 Удаление позиции по инструментам
+        self.on_account_position = Event()  # 2.2.13 Изменение денежных средств
         # on_neg_deal - 2.2.14 Новая внебиржевая заявка / Изменение существующей внебиржевой заявки
         # on_neg_trade - 2.2.15 Новая внебиржевая сделка / Изменение существующей внебиржевой сделки
-        self.on_stop_order = self.default_handler  # 2.2.16 Новая стоп заявка / Изменение существующей стоп заявки
-        self.on_trans_reply = self.default_handler  # 2.2.17 Ответ на транзакцию пользователя
-        self.on_param = self.default_handler  # 2.2.18 Изменение текущих параметров
-        self.on_quote = self.default_handler  # 2.2.19 Изменение стакана котировок
-        self.on_disconnected = self.default_handler  # 2.2.20 Отключение терминала от сервера QUIK
-        self.on_connected = self.default_handler  # 2.2.21 Соединение терминала с сервером QUIK
+        self.on_stop_order = Event()  # 2.2.16 Новая стоп заявка / Изменение существующей стоп заявки
+        self.on_trans_reply = Event()  # 2.2.17 Ответ на транзакцию пользователя
+        self.on_param = Event()  # 2.2.18 Изменение текущих параметров
+        self.on_quote = Event()  # 2.2.19 Изменение стакана котировок
+        self.on_disconnected = Event()  # 2.2.20 Отключение терминала от сервера QUIK
+        self.on_connected = Event()  # 2.2.21 Соединение терминала с сервером QUIK
         # on_clean_up - 2.2.22 Смена сервера QUIK / Пользователя / Сессии
-        self.on_close = self.default_handler  # 2.2.23 Закрытие терминала QUIK
-        self.on_stop = self.default_handler  # 2.2.24 Остановка LUA скрипта в терминале QUIK / закрытие терминала QUIK
-        self.on_init = self.default_handler  # 2.2.25 Запуск LUA скрипта в терминале QUIK
+        self.on_close = Event()  # 2.2.23 Закрытие терминала QUIK
+        self.on_stop = Event()  # 2.2.24 Остановка LUA скрипта в терминале QUIK / закрытие терминала QUIK
+        self.on_init = Event()  # 2.2.25 Запуск LUA скрипта в терминале QUIK
         # on_main - 2.2.26 Функция, реализующая основной поток выполнения в скрипте
 
         # Функции обратного вызова QUIK#
-        self.on_new_candle = self.default_handler  # Новая свечка
-        self.on_error = self.default_handler  # Сообщение об ошибке
+        self.on_new_candle = Event()  # Новая свечка
+        self.on_error = Event()  # Сообщение об ошибке
 
         self.host = host  # IP адрес или название хоста
         self.requests_port = requests_port  # Порт для отправки запросов и получения ответов
@@ -64,7 +64,7 @@ class QuikPy:
         self.socket_requests = socket(AF_INET, SOCK_STREAM)  # Создаем соединение для запросов
         self.socket_requests.connect((self.host, self.requests_port))  # Открываем соединение для запросов
 
-        self.callback_exit_event = Event()  # Определяем событие выхода из потока
+        self.callback_exit_event = ThreadingEvent()  # Определяем событие выхода из потока
         self.callback_thread = Thread(target=self.callback_handler, name='CallbackThread').start()  # Создаем и запускаем поток обработки функций обратного вызова
         self.lock = Lock()  # Блокировка process_request для многопоточных приложений
 
@@ -849,10 +849,6 @@ class QuikPy:
 
     # Подписки (функции обратного вызова)
 
-    def default_handler(self, data):
-        """Пустой обработчик события по умолчанию. Его можно заменить на пользовательский"""
-        pass
-
     def callback_handler(self):
         """Поток обработки результатов функций обратного вызова"""
         callbacks = socket(AF_INET, SOCK_STREAM)  # Соединение для функций обратного вызова
@@ -881,43 +877,43 @@ class QuikPy:
                 # self.logger.debug(f'callback_handler: Пришли данные подписки {data["cmd"]} {data}')  # Для отладки
                 # Разбираем функцию обратного вызова QUIK LUA
                 if data['cmd'] == 'OnFirm':  # 1. Новая фирма
-                    self.on_firm(data)
+                    self.on_firm.trigger(data)
                 elif data['cmd'] == 'OnAllTrade':  # 2. Получение обезличенной сделки
-                    self.on_all_trade(data)
+                    self.on_all_trade.trigger(data)
                 elif data['cmd'] == 'OnTrade':  # 3. Получение новой / изменение существующей сделки
-                    self.on_trade(data)
+                    self.on_trade.trigger(data)
                 elif data['cmd'] == 'OnOrder':  # 4. Получение новой / изменение существующей заявки
-                    self.on_order(data)
+                    self.on_order.trigger(data)
                 elif data['cmd'] == 'OnAccountBalance':  # 5. Изменение позиций по счету
-                    self.on_account_balance(data)
+                    self.on_account_balance.trigger(data)
                 elif data['cmd'] == 'OnFuturesLimitChange':  # 6. Изменение ограничений по срочному рынку
-                    self.on_futures_limit_change(data)
+                    self.on_futures_limit_change.trigger(data)
                 elif data['cmd'] == 'OnFuturesLimitDelete':  # 7. Удаление ограничений по срочному рынку
-                    self.on_futures_limit_delete(data)
+                    self.on_futures_limit_delete.trigger(data)
                 elif data['cmd'] == 'OnFuturesClientHolding':  # 8. Изменение позиции по срочному рынку
-                    self.on_futures_client_holding(data)
+                    self.on_futures_client_holding.trigger(data)
                 elif data['cmd'] == 'OnMoneyLimit':  # 9. Изменение денежной позиции
-                    self.on_money_limit(data)
+                    self.on_money_limit.trigger(data)
                 elif data['cmd'] == 'OnMoneyLimitDelete':  # 10. Удаление денежной позиции
-                    self.on_money_limit_delete(data)
+                    self.on_money_limit_delete.trigger(data)
                 elif data['cmd'] == 'OnDepoLimit':  # 11. Изменение позиций по инструментам
-                    self.on_depo_limit(data)
+                    self.on_depo_limit.trigger(data)
                 elif data['cmd'] == 'OnDepoLimitDelete':  # 12. Удаление позиции по инструментам
-                    self.on_depo_limit_delete(data)
+                    self.on_depo_limit_delete.trigger(data)
                 elif data['cmd'] == 'OnAccountPosition':  # 13. Изменение денежных средств
-                    self.on_account_position(data)
+                    self.on_account_position.trigger(data)
                 # on_neg_deal - 14. Получение новой / изменение существующей внебиржевой заявки
                 # on_neg_trade - 15. Получение новой / изменение существующей сделки для исполнения
                 elif data['cmd'] == 'OnStopOrder':  # 16. Получение новой / изменение существующей стоп заявки
-                    self.on_stop_order(data)
+                    self.on_stop_order.trigger(data)
                 elif data['cmd'] == 'OnTransReply':  # 17. Ответ на транзакцию пользователя
-                    self.on_trans_reply(data)
+                    self.on_trans_reply.trigger(data)
                 elif data['cmd'] == 'OnParam':  # 18. Изменение текущих параметров
-                    self.on_param(data)
+                    self.on_param.trigger(data)
                 elif data['cmd'] == 'OnQuote':  # 19. Изменение стакана котировок
-                    self.on_quote(data)
+                    self.on_quote.trigger(data)
                 elif data['cmd'] == 'OnDisconnected':  # 20. Отключение терминала от сервера QUIK
-                    self.on_disconnected(data)
+                    self.on_disconnected.trigger(data)
                 elif data['cmd'] == 'OnConnected':  # 21. Соединение терминала с сервером QUIK
                     for subscription in self.subscriptions:  # Пробегаемся по всем подпискам
                         class_code = subscription['class_code']  # Код режима торгов
@@ -931,19 +927,19 @@ class QuikPy:
                             if not self.is_subscribed(class_code, sec_code, interval, param)['data']:  # и ее нет в QUIK'
                                 self.subscribe_to_candles(class_code, sec_code, interval, param)  # то подписываемся на свечки
                                 self.logger.debug(f'Повторная подписка на бары: {class_code}.{sec_code} {interval} {param}')
-                    self.on_connected(data)
+                    self.on_connected.trigger(data)
                 # on_clean_up - 22. Смена сервера QUIK / Пользователя / Сессии
                 elif data['cmd'] == 'OnClose':  # 23. Закрытие терминала QUIK
-                    self.on_close(data)
+                    self.on_close.trigger(data)
                 elif data['cmd'] == 'OnStop':  # 24. Остановка LUA скрипта в терминале QUIK / закрытие терминала QUIK
-                    self.on_stop(data)
+                    self.on_stop.trigger(data)
                 elif data['cmd'] == 'OnInit':  # 25. Запуск LUA скрипта в терминале QUIK
-                    self.on_init(data)
+                    self.on_init.trigger(data)
                 # Разбираем функции обратного вызова QUIK#
                 elif data['cmd'] == 'NewCandle':  # Получение новой свечки
-                    self.on_new_candle(data)
+                    self.on_new_candle.trigger(data)
                 elif data['cmd'] == 'lua_error':  # Получено сообщение об ошибке
-                    self.on_error(data)
+                    self.on_error.trigger(data)
 
     # Выход и закрытие
 
@@ -1129,3 +1125,25 @@ class QuikPy:
             if lot_size:  # Если задано кол-во штук
                 return size // lot_size  # то возвращаем кол-во в лотах
         return size  # В остальных случаях возвращаем кол-во в штуках
+
+
+class Event(object):
+    """Обработка событий. По статье https://www.pythontutorials.net/blog/does-python-classes-support-events-like-other-languages/"""
+    def __init__(self):
+        self._callbacks = []  # Список функций обратного вызова - функции, которые будут вызываться на событие
+
+    def subscribe(self, callback):
+        """Добавление функции обратного вызова (подписка)"""
+        if callback not in self._callbacks:  # Если этой фукнции еще нет
+            self._callbacks.append(callback)  # то добавляем ее в список функций обратного вызова
+
+    def unsubscribe(self, callback):
+        """Удаление функции обратного вызова (отмена подписки)"""
+        if callback in self._callbacks:  # Если эта функция есть
+            self._callbacks.remove(callback)  # то удаляем ее из списка функций обратного вызова
+
+    def trigger(self, *args, **kwargs):
+        """Запуск всех функций обратного вызова с аргументами"""
+        # Iterate over a copy of the list to allow unsubscribing during iteration
+        for callback in self._callbacks[:]:  # Пробегаемся по копии списка функций обратного вызова, чтобы разрешить удаление, пока функции выполняются
+            callback(*args, **kwargs)  # Выполняем функцию обратного вызова
