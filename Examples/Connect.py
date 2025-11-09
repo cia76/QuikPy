@@ -1,11 +1,23 @@
 import logging  # Выводим лог на консоль и в файл
-import sys  # Выход из точки входа
 from datetime import datetime  # Дата и время
+import sys  # Выход из точки входа
 
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QUIK#
 
 
 def on_event(data): logger.info(data)  # Данные из подписок
+
+
+def on_new_bar(data):  # Обработчик события прихода нового бара
+    bar = data['data']  # Данные бара
+    dt_json = bar['datetime']  # Получаем составное значение даты и времени открытия бара
+    dt = datetime(dt_json['year'], dt_json['month'], dt_json['day'], dt_json['hour'], dt_json['min'])  # Время открытия бара
+    logger.info(f'{dt:%d.%m.%Y %H:%M:%S} '
+                f'O: {bar['open']} '
+                f'H: {bar['high']} '
+                f'L: {bar['low']} '
+                f'C: {bar['close']} '
+                f'V: {int(bar['volume'])}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -41,13 +53,22 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logger.info(f'Разница во времени  : {td}')
 
     # Проверяем работу подписок
+    dataname = 'TQBR.SBER'  # Тикер
+    tf = 'M1'  # Временной интервал
+
+    logger.info(f'Подписка на {tf} бары тикера {dataname}')
     qp_provider.on_connected.subscribe(on_event)  # Нажимаем кнопку "Установить соединение" в QUIK
     qp_provider.on_disconnected.subscribe(on_event)  # Нажимаем кнопку "Разорвать соединение" в QUIK
     qp_provider.on_param.subscribe(on_event)  # Текущие параметры изменяются постоянно. Будем их смотреть, пока не нажмем Enter в консоли
+    qp_provider.on_new_candle.subscribe(on_new_bar)  # Подписываемся на новые бары
+    class_code, sec_code = qp_provider.dataname_to_class_sec_codes(dataname)  # Код режима торгов и тикер
+    quik_tf, _ = qp_provider.timeframe_to_quik_timeframe(tf)  # Временной интервал QUIK
+    qp_provider.subscribe_to_candles(class_code, sec_code, quik_tf)  # Запускаем подписку на новые бары
 
     # Выход
     input('Enter - выход\n')
     qp_provider.on_connected.unsubscribe(on_event)  # Отменяем подписку на соединение с QUIK
     qp_provider.on_disconnected.unsubscribe(on_event)  # Отменяем подписку на отключение от QUIK
     qp_provider.on_param.unsubscribe(on_event)  # Отменяем подписку текущих параметров
+    qp_provider.on_new_candle.unsubscribe(on_new_bar)  # Отменяем подписку на новые бары
     qp_provider.close_connection_and_thread()  # Перед выходом закрываем соединение для запросов и поток обработки функций обратного вызова
