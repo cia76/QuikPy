@@ -15,19 +15,19 @@ def _on_trans_reply(data):
     logger.info(f'Номер транзакции: {data["data"]["trans_id"]}, Номер заявки: {order_num}')
 
 
-def _on_order(data): logger.info(f'OnOrder: {data}')
+def _on_order(data): logger.info(f'Заявка - {data}')
 
 
-def _on_stop_order(data): logger.info(f'OnStopOrder: {data}')
+def _on_stop_order(data): logger.info(f'Стоп заявка - {data}')
 
 
-def _on_trade(data): logger.info(f'OnTrade: {data}')
+def _on_trade(data): logger.info(f'Сделка - {data}')
 
 
 def _on_futures_client_holding(data): logger.info(f'OnFuturesClientHolding: {data}')
 
 
-def _on_depo_limit(data): logger.info(f'OnDepoLimit: {data}')
+def _on_depo_limit(data): logger.info(f'Позиция - {data}')
 
 
 def _on_depo_limit_delete(data): logger.info(f'OnDepoLimitDelete: {data}')
@@ -162,6 +162,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     sleep(10)  # Ждем 10 секунд
 
+    # Отмена подписок
     qp_provider.on_trans_reply.unsubscribe(_on_trans_reply)  # Отменяем подписку на транзакции
     qp_provider.on_order.unsubscribe(_on_order)  # Отменяем подписку на зявки
     qp_provider.on_stop_order.unsubscribe(_on_stop_order)  # Отменяем подписку на стоп заявки
@@ -170,4 +171,5 @@ if __name__ == '__main__':  # Точка входа при запуске это
     qp_provider.on_depo_limit.unsubscribe(_on_depo_limit)  # Отменяем подписку на изменение позиций по инструментам
     qp_provider.on_depo_limit_delete.unsubscribe(_on_depo_limit_delete)  # Отменяем подписку на удаление позиций по инструментам
 
+    # Выход
     qp_provider.close_connection_and_thread()  # Закрываем соединение для запросов и поток обработки функций обратного вызова
