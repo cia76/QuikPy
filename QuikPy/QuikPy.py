@@ -1,3 +1,4 @@
+from typing import Any  # Любой тип
 from socket import socket, AF_INET, SOCK_STREAM  # Обращаться к LUA скриптам QUIK# будем через соединения
 from threading import Thread, Event as ThreadingEvent, Lock  # Поток/событие выхода для обратного вызова. Блокировка process_request для многопоточных приложений
 from json import loads  # Принимать данные в QUIK будем через JSON
@@ -1127,23 +1128,20 @@ class QuikPy:
         return size  # В остальных случаях возвращаем кол-во в штуках
 
 
-class Event(object):
-    """Обработка событий. По статье https://www.pythontutorials.net/blog/does-python-classes-support-events-like-other-languages/"""
+class Event:
+    """Событие с подпиской / отменой подписки"""
     def __init__(self):
-        self._callbacks = []  # Список функций обратного вызова - функции, которые будут вызываться на событие
+        self._callbacks: set[Any] = set()  # Избегаем дубликатов функций при помощи set
 
-    def subscribe(self, callback):
-        """Добавление функции обратного вызова (подписка)"""
-        if callback not in self._callbacks:  # Если этой фукнции еще нет
-            self._callbacks.append(callback)  # то добавляем ее в список функций обратного вызова
+    def subscribe(self, callback) -> None:
+        """Подписаться на событие"""
+        self._callbacks.add(callback)  # Добавляем функцию в список
 
-    def unsubscribe(self, callback):
-        """Удаление функции обратного вызова (отмена подписки)"""
-        if callback in self._callbacks:  # Если эта функция есть
-            self._callbacks.remove(callback)  # то удаляем ее из списка функций обратного вызова
+    def unsubscribe(self, callback) -> None:
+        """Отписаться от события"""
+        self._callbacks.discard(callback)  # Удаляем функцию из списка. Если функции нет в списке, то не будет ошибки
 
-    def trigger(self, *args, **kwargs):
-        """Запуск всех функций обратного вызова с аргументами"""
-        # Iterate over a copy of the list to allow unsubscribing during iteration
-        for callback in self._callbacks[:]:  # Пробегаемся по копии списка функций обратного вызова, чтобы разрешить удаление, пока функции выполняются
-            callback(*args, **kwargs)  # Выполняем функцию обратного вызова
+    def trigger(self, *args, **kwargs) -> None:
+        """Вызвать событие"""
+        for callback in list(self._callbacks):  # Пробегаемся по копии списка, чтобы избежать исключения при удалении
+            callback(*args, **kwargs)  # Вызываем функцию
