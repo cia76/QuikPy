@@ -1,11 +1,10 @@
+import logging  # Будем вести лог
+from zoneinfo import ZoneInfo  # ВременнАя зона
 from typing import Any  # Любой тип
 from socket import socket, AF_INET, SOCK_STREAM  # Обращаться к LUA скриптам QUIK# будем через соединения
 from threading import Thread, Event as ThreadingEvent, Lock  # Поток/событие выхода для обратного вызова. Блокировка process_request для многопоточных приложений
 from json import loads  # Принимать данные в QUIK будем через JSON
 from json.decoder import JSONDecodeError  # Ошибка декодирования JSON
-import logging  # Будем вести лог
-
-from pytz import timezone  # Работаем с временнОй зоной
 
 
 class QuikPy:
@@ -14,7 +13,7 @@ class QuikPy:
      Маркировка функций по пунктам документа: Документация по языку LUA в QUIK и примеры - Интерпретатор языка Lua - Версия 11.2
      """
     buffer_size = 1048576  # Размер буфера приема в байтах (1 МБайт)
-    tz_msk = timezone('Europe/Moscow')  # QUIK работает по московскому времени
+    tz_msk = ZoneInfo('Europe/Moscow')  # Время UTC будем приводить к московскому времени
     currency = 'SUR'  # Суммы будем получать в рублях
     limit_kind = 1  # Основной режим торгов T1
     futures_firm_id = 'SPBFUT'  # Код фирмы для срочного рынка. Если ваш брокер поставил другую фирму для срочного рынка, то измените ее
