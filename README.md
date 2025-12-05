@@ -13,7 +13,7 @@
 ### Назначение
  - Создание автоматических торговых систем любой сложности
  - Написание дополнений к системам Технического Анализа
- - Тестирование торговых систем и автоматическая торговля в [BackTrader](https://www.backtrader.com/) через коннектор [BackTraderAlor](https://github.com/cia76/BackTraderAlor).
+ - Тестирование торговых систем и автоматическая торговля в [BackTrader](https://www.backtrader.com/) через [систему "Финансовая Лаборатория"](https://github.com/cia76/FinLabPy).
 
 ### Установка
 1. Установите библиотеку через pip в командной строке: **pip install git+https://github.com/cia76/QuikPy.git**
