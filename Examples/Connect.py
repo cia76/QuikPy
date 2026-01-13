@@ -46,7 +46,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     dt_local = datetime.now(qp_provider.tz_msk)  # Текущее время
     trade_date = qp_provider.get_info_param('TRADEDATE')['data']  # Дата на сервере в виде строки dd.mm.yyyy
     server_time = qp_provider.get_info_param('SERVERTIME')['data']  # Время на сервере в виде строки hh:mi:ss
-    dt_server = datetime.strptime(f'{trade_date} {server_time}', '%d.%m.%Y %H:%M:%S')  # Переводим строки в дату и время
+    dt_server = datetime.strptime(f'{trade_date} {server_time}', '%d.%m.%Y %H:%M:%S').replace(tzinfo=qp_provider.tz_msk)  # Переводим строки в дату и время
     td = dt_server - dt_local  # Разница во времени в виде timedelta
     logger.info(f'Локальное время МСК : {dt_local:%d.%m.%Y %H:%M:%S}')
     logger.info(f'Время на сервере    : {dt_server:%d.%m.%Y %H:%M:%S}')
