@@ -1,7 +1,15 @@
 import logging  # Выводим лог на консоль и в файл
-from datetime import datetime  # Дата и время
+from datetime import date, timedelta, datetime  # Дата и время
 
 from QuikPy import QuikPy  # Работа с QUIK из Python через LUA скрипты QUIK#
+
+
+def get_future_on_date(base, future_date=date.today()):  # Фьючерсный контракт на дату
+    if future_date.day > 15 and future_date.month in (3, 6, 9, 12):  # Если нужно переходить на следующий фьючерс
+        future_date += timedelta(days=30)  # то добавляем месяц к дате
+    period = 'H' if future_date.month <= 3 else 'M' if future_date.month <= 6 else 'U' if future_date.month <= 9 else 'Z'  # Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    digit = future_date.year % 10  # Последняя цифра года
+    return f'SPBFUT.{base}{period}{digit}'
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -14,9 +22,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                         handlers=[logging.FileHandler('Ticker.log', encoding='utf-8'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=qp_provider.tz_msk).timetuple()  # В логе время указываем по МСК
 
-    # Формат короткого имени для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>. Пример: SiU4, RIU4
-    # datanames = ('SBER',)  # Тикер без режима торгов
-    datanames = ('TQBR.SBER', 'TQBR.HYDR', 'SPBFUT.SiU4', 'SPBFUT.RIU4', 'SPBFUT.BRU4', 'SPBFUT.CNYRUBF')  # Кортеж тикеров
+    datanames = ('TQBR.SBER', 'TQBR.HYDR', get_future_on_date("Si"), get_future_on_date("RI"), 'SPBFUT.CNYRUBF', 'SPBFUT.IMOEXF')  # Кортеж тикеров
 
     for dataname in datanames:  # Пробегаемся по всем тикерам
         class_code, sec_code = qp_provider.dataname_to_class_sec_codes(dataname)  # Код режима торгов и тикер
